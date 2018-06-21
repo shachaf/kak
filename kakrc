@@ -2,7 +2,7 @@
 source "%val{config}/plugins/kakoune-buffers/buffers.kak"
 source "%val{config}/plugins/kakoune-find/find.kak"
 source "%val{config}/plugins/kakoune-phantom-selection/phantom-selection.kak"
-source "%val{config}/plugins/search-highlighting.kak/rc/search-highlighting.kak"
+#source "%val{config}/plugins/search-highlighting.kak/rc/search-highlighting.kak"
 #source "%val{config}/plugins/volatile-highlighting.kak/rc/volatile-highlighting.kak"
 
 source "%val{config}/scripts/select-block.kak"
@@ -143,11 +143,14 @@ hook global BufCreate   '\*find\*' %{ alias global next find-next-match; alias g
 hook global BufSetOption 'spell_tmp_file=.+' %{ alias global next spell-next; unalias global prev }
 
 ## File types.
-def filetype-hook -params 2 %{ hook global WinSetOption "filetype=%arg{1}" %arg{2} }
+def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %arg{2} }
 
-filetype-hook makefile %{ try smarttab-disable }
 filetype-hook man %{ rmhl window/number_lines }
-filetype-hook (c|cpp) %{
+filetype-hook makefile|go %{
+  try smarttab-disable
+  set window indentwidth 0
+}
+filetype-hook c|cpp %{
   clang-enable-autocomplete; clang-enable-diagnostics
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
@@ -381,7 +384,8 @@ def tab-completion-disable %{ rmhooks window tab-completion }
 # volatile-highlighting.kak with some changes. Mainly:
 # * Match more keys in the disable hook
 # * Remove the disable hook when not active, to clean up debug hook log
-def volatile-highlighting-enable -docstring 'enable volatile highlighting' %{
+face global VolatileHighlighting white,yellow
+def volatile-highlighting-enable %{
   hook window -group volatile-highlighting NormalKey [ydcpP] %{ try %{
     addhl window/ group VolatileHighlighting
     addhl window/VolatileHighlighting dynregex '\Q%reg{"}\E' 0:Volatile
@@ -391,11 +395,27 @@ def volatile-highlighting-enable -docstring 'enable volatile highlighting' %{
     }
   }}
 }
-def volatile-highlighting-disable -docstring 'disable volatile highlighting' %{
+def volatile-highlighting-disable %{
   rmhl window/VolatileHighlighting
   rmhooks window volatile-highlighting-active
   rmhooks window volatile-highlighting
 }
+
+
+# search-highlighting.kak, simplified
+face global Search white,yellow
+def search-highlighting-enable %{
+  hook window -group search-highlighting NormalKey [/?*nN]|<a-[/?*nN]> %{ try %{
+    addhl window/ group SearchHighlighting
+    addhl window/SearchHighlighting dynregex '%reg{/}' 0:Search
+  }}
+  hook window -group search-highlighting NormalKey <esc> %{ rmhl window/SearchHighlighting }
+}
+def search-highlighting-disable %{
+  rmhl window/SearchHighlighting
+  rmhooks window search-highlighting
+}
+
 
 # More things.
 source "%val{config}/local/kakrc"
