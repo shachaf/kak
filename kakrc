@@ -76,7 +76,7 @@ map global normal <f3> ':set global '
 map global normal   <f12> ': select-word-better<ret>'
 map global normal <s-f12> ': select-WORD-better<ret>'
 
-map global normal  ': select-word-better; ctags-search-word<ret>' # <c-]>
+map global normal <a-]> ': select-word-better; ctags-search<ret>'
 
 map global normal   <#> ': comment-line-better<ret>'
 map global normal <a-#> ': comment-block<ret>'
@@ -84,6 +84,7 @@ map global normal <a-#> ': comment-block<ret>'
 map global normal <c-v> ': select-block<ret>'
 
 map global normal <c-p>   ': lint<ret>'
+
 map global normal <c-n>   ': next<ret>'
 map global normal <c-a-n> ': prev<ret>'
 
@@ -100,7 +101,7 @@ map global insert <c-w> '<a-;>: exec -draft b<lt>a-d<gt><ret>'
 # Available normal keys:
 # D + ^ <ret> <del> <ins> <f4>-<f11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
-# <c-[acgkmqrtwx]> <c-space> (with \0)
+# <c-[acgkmqrtwx]> <c-space> (\0) <c-]> () <c-/> () <c-\> ()
 
 # User map.
 map global user m       -docstring 'make'                   ': make<ret>'
@@ -112,6 +113,7 @@ map global user n       -docstring 'next lint error'        ': lint-next-error<r
 map global user <a-n>   -docstring 'prev lint error'        ': lint-previous-error<ret>'
 map global user e       -docstring 'eval selection'         ': eval %val{selection}<ret>'
 map global user c       -docstring 'char info'              ': show-char-info<ret>'
+map global user h       -docstring 'selection hull'         ': hull<ret>'
 map global user K       -docstring 'man'                    ': man<ret>'
 map global user g       -docstring 'git'                    ': enter-user-mode git<ret>'
 map global user b       -docstring 'buffers…'               ': enter-buffers-mode<ret>'
@@ -238,6 +240,9 @@ def comment-line-better %{
       exec P
     }
   }
+  # Maybe instead of maintaining the existing selection, this should select the
+  # comment column or the following whitespace, so that you can insert/delete
+  # whitespace yourself if you want, <a-J>-style.
 }
 
 def align-cursors-left \
@@ -291,7 +296,7 @@ def addhl-named -params 2.. \
 
 ## More:
 # Git extras:
-def git-show-blame-commit %{
+def git-show-blamed-commit %{
   git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{print $1}'}
 }
 def git-log-lines %{
@@ -310,16 +315,18 @@ def git-toggle-blame %{
     git hide-blame
   }
 }
+def git-hide-diff %{ rmhl window/hlflags_git_diff_flags }
 
 declare-user-mode git
-map global git b ': git-toggle-blame<ret>'      -docstring 'blame (toggle)'
-map global git l ': git log<ret>'               -docstring 'log'
-map global git c ': git commit<ret>'            -docstring 'commit'
-map global git d ': git diff<ret>'              -docstring 'diff'
-map global git s ': git status<ret>'            -docstring 'status'
-map global git D ': git show-diff<ret>'         -docstring 'show diff'
-map global git w ': git-show-blame-commit<ret>' -docstring 'show blame commit'
-map global git W ': git-log-lines<ret>'         -docstring 'log blame'
+map global git b ': git-toggle-blame<ret>'       -docstring 'blame (toggle)'
+map global git l ': git log<ret>'                -docstring 'log'
+map global git c ': git commit<ret>'             -docstring 'commit'
+map global git d ': git diff<ret>'               -docstring 'diff'
+map global git s ': git status<ret>'             -docstring 'status'
+map global git h ': git show-diff<ret>'          -docstring 'show diff'
+map global git H ': git-hide-diff<ret>'          -docstring 'hide diff'
+map global git w ': git-show-blamed-commit<ret>' -docstring 'show blamed commit'
+map global git L ': git-log-lines<ret>'          -docstring 'log blame'
 
 
 # smarttab.kak?
@@ -341,61 +348,53 @@ def smarttab-disable %{ rmhooks window smarttab }
 # inserting it, but that doesn't seem possible right now.
 def show-trailing-whitespace-enable %{
   addhl-named window/TrailingWhitespace regex \h+$ 0:TrailingWhitespaceActive
-  try %{
-    face window TrailingWhitespaceActive TrailingWhitespace
-  } catch %{
-    # Define face first if not present.
-    face window TrailingWhitespace ''
-    face window TrailingWhitespaceActive TrailingWhitespace
-  }
-  hook -group TrailingWhitespace window ModeChange 'normal:insert' \
+  face window TrailingWhitespaceActive TrailingWhitespace
+  hook -group trailing-whitespace window ModeChange 'normal:insert' \
     %{ face window TrailingWhitespaceActive '' }
-  hook -group TrailingWhitespace window ModeChange 'insert:normal' \
+  hook -group trailing-whitespace window ModeChange 'insert:normal' \
     %{ face window TrailingWhitespaceActive TrailingWhitespace }
 }
 def show-trailing-whitespace-disable %{
   rmhl window/TrailingWhitespace
-  rmhooks window TrailingWhitespace
+  rmhooks window trailing-whitespace
 }
+face global TrailingWhitespace ''
 
 
 # Tab completion (from wiki).
 def tab-completion-enable %{
-  hook -group TabCompletion window InsertCompletionShow .* %{
+  hook -group tab-completion window InsertCompletionShow .* %{
     try %{
       exec -draft 'h<a-K>\h<ret>'
       map window insert <tab> <c-n>
       map window insert <s-tab> <c-p>
     }
   }
-  hook -group TabCompletion window InsertCompletionHide .* %{
+  hook -group tab-completion window InsertCompletionHide .* %{
     unmap window insert <tab> <c-n>
     unmap window insert <s-tab> <c-p>
   }
 }
-def tab-completion-disable %{ rmhooks window TabCompletion }
+def tab-completion-disable %{ rmhooks window tab-completion }
 
 
-# volatile-highlighting.kak with some changes:
-# * Match more keys in the disable hook;
+# volatile-highlighting.kak with some changes. Mainly:
+# * Match more keys in the disable hook
 # * Remove the disable hook when not active, to clean up debug hook log
-eval %{
-  def volatile-highlighting-enable -docstring 'enable volatile highlighting' %{
-    hook window -group volatile-highlighting NormalKey [ydcpP] %{ try %{
-      addhl window/ group VolatileHighlighting
-      addhl window/VolatileHighlighting dynregex '\Q%reg{"}\E' 0:Volatile
-      hook window -group volatile-highlighting-active NormalKey [^ydcpP]|..+ %{
-        rmhl window/VolatileHighlighting
-        rmhooks window volatile-highlighting-active
-      }
-    }}
-  }
-
-  def volatile-highlighting-disable -docstring 'disable volatile highlighting' %{
-    rmhl window/VolatileHighlighting
-    rmhooks window volatile-highlighting-active
-    rmhooks window volatile-highlighting
-  }
+def volatile-highlighting-enable -docstring 'enable volatile highlighting' %{
+  hook window -group volatile-highlighting NormalKey [ydcpP] %{ try %{
+    addhl window/ group VolatileHighlighting
+    addhl window/VolatileHighlighting dynregex '\Q%reg{"}\E' 0:Volatile
+    hook window -group volatile-highlighting-active NormalKey [^ydcpP]|..+ %{
+      rmhl window/VolatileHighlighting
+      rmhooks window volatile-highlighting-active
+    }
+  }}
+}
+def volatile-highlighting-disable -docstring 'disable volatile highlighting' %{
+  rmhl window/VolatileHighlighting
+  rmhooks window volatile-highlighting-active
+  rmhooks window volatile-highlighting
 }
 
 # More things.
