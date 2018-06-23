@@ -71,7 +71,6 @@ map global normal <minus> 'ga' # I can probably find a better use for <minus>.
 
 map global normal <f1> ':new '
 map global normal <f2> ': new exec :<ret>'
-map global normal <f3> ':set global '
 
 map global normal   <f12> ': select-word-better<ret>'
 map global normal <s-f12> ': select-WORD-better<ret>'
@@ -126,6 +125,7 @@ map global user y       -docstring 'yank primary'           ': exec "<lt>a-|>xse
 map global user Y       -docstring 'yank clipboard'         ': exec "<lt>a-|>xsel -ib<lt>ret>"<ret>'
 map global user <minus> -docstring '.c <-> .h'              ': c-family-alternative-file<ret>'
 map global user <plus>  -docstring 'switch to [+] buffer'   ': switch-to-modified-buffer<ret>'
+map global user s       -docstring 'set option'             ': enter-user-mode set<ret>'
 
 ## Configure plugins.
 # snippet.kak
@@ -298,7 +298,7 @@ def addhl-named -params 2.. \
 }
 
 ## More:
-# Git extras:
+# Git extras.
 def git-show-blamed-commit %{
   git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{print $1}'}
 }
@@ -364,11 +364,11 @@ def show-trailing-whitespace-disable %{
 face global TrailingWhitespace ''
 
 
-# Tab completion (from wiki).
+# Tab completion.
 def tab-completion-enable %{
   hook -group tab-completion window InsertCompletionShow .* %{
     try %{
-      exec -draft 'h<a-K>\h<ret>'
+      exec -draft 'h<a-K>\s<ret>'
       map window insert <tab> <c-n>
       map window insert <s-tab> <c-p>
     }
@@ -379,6 +379,13 @@ def tab-completion-enable %{
   }
 }
 def tab-completion-disable %{ rmhooks window tab-completion }
+
+
+# This is also kind of silly.
+declare-user-mode set
+map global set g ':set global ' -docstring 'global'
+map global set b ':set buffer ' -docstring 'buffer'
+map global set w ':set window ' -docstring 'window'
 
 
 # volatile-highlighting.kak with some changes. Mainly:
@@ -418,4 +425,4 @@ def search-highlighting-disable %{
 
 
 # More things.
-source "%val{config}/local/kakrc"
+eval %sh{[ -r "$kak_config/local/kakrc" ] && echo 'source "%val{config}/local/kakrc"' || echo 'echo -debug "no local kakrc"' }

@@ -195,4 +195,5 @@ nop 'Configuration' %{
   # Manual complete:
   map global insert <c-k> '<a-;>: char-input-begin ".../char-input-digraph.txt"<ret>'
   map global insert <a-k> '<a-;>: char-input-begin %opt{char_input_auto_data}<ret>'
+  map global insert <c-\> '\<a-;>: char-input-begin ".../char-input-tex.txt" h<ret>'
 }
