@@ -28,10 +28,9 @@ def char-input-begin -params 1..2 \
   %{
   try %{
     # Fail if completion was already ongoing.
-    addhl window group char-input-ongoing
+    addhl window/char-input-ongoing replace-ranges char_input_ongoing_range_content
     set window char_input_ongoing_data %arg{1}
     set window char_input_ongoing_range_content ""
-    addhl window/char-input-ongoing replace-ranges char_input_ongoing_range_content
     hook -group char-input-ongoing window ModeChange 'insert:normal' char-input-end
     hook -group char-input-ongoing window InsertMove .* char-input-end
     hook -group char-input-ongoing window InsertKey \
@@ -48,7 +47,7 @@ def char-input-begin -params 1..2 \
     # end it. If so, begin completion after that.
     char-input-complete
     try %{
-      addhl window group char-input-ongoing
+      addhl window/char-input-ongoing group
       rmhl window/char-input-ongoing
       char-input-begin %arg{@}
     }

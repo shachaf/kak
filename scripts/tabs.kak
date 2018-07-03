@@ -1,4 +1,5 @@
 # XXX: Spent a little while fixing this post-bbtu but it's still somewhat broken.
+# Also note that this script is kind of a joke.
 declare-option -hidden int tab_curr
 declare-option -hidden str-list tab_bufs
 declare-option str tab_mode_text

@@ -64,7 +64,6 @@ nop 'Configuration' %{
   set global snippet_hole_pattern %{%%%\{\w+\}%%%|[⁰¹²³⁴⁵⁶⁷💙💚💛💜💝💟🧡]}
   map global insert <a-[> '<esc>: try replace-next-hole catch snippet-word<ret>'
   hook global WinCreate .* %{
-    addhl window group SnippetHole
     addhl window/SnippetHole \
       regex (¹)|(²)|(³)|(⁴)|(⁵)|(⁶)|(⁷) \
       1:default,red \

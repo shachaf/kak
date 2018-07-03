@@ -2,13 +2,10 @@
 source "%val{config}/plugins/kakoune-buffers/buffers.kak"
 source "%val{config}/plugins/kakoune-find/find.kak"
 source "%val{config}/plugins/kakoune-phantom-selection/phantom-selection.kak"
-#source "%val{config}/plugins/search-highlighting.kak/rc/search-highlighting.kak"
-#source "%val{config}/plugins/volatile-highlighting.kak/rc/volatile-highlighting.kak"
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
 source "%val{config}/scripts/snippet.kak"
-#source "%val{config}/scripts/tabs.kak"
 source "%val{config}/scripts/char-input.kak"
 
 ## General settings.
@@ -25,11 +22,12 @@ set global tabstop 8
 colorscheme desertex; face global comment rgb:7ccd7c
 
 hook global WinCreate .* %{
-  addhl window wrap
-  addhl window number_lines -relative -hlcursor
-  addhl window show_whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
+  addhl window/ wrap
+  addhl window/ number_lines -relative -hlcursor
+  addhl window/ show_whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
   face window Whitespace cyan
-  addhl-named window/VisibleWords regex \b(?:TODO|FIXME|XXX)\b 0:default+rb
+  addhl window/ show_matching
+  addhl window/VisibleWords regex \b(?:TODO|FIXME|XXX)\b 0:default+rb
 
   smarttab-enable
   tab-completion-enable
@@ -38,7 +36,7 @@ hook global WinCreate .* %{
   volatile-highlighting-enable; face window Volatile +bi
   #tex-completion-enable
 
-  addhl-named window/SnippetHole \
+  addhl window/SnippetHole \
     regex (¹)|(²)|(³)|(⁴)|(⁵)|(⁶)|(⁷) \
     1:default,red \
     2:default,rgb:FF8000 \
@@ -113,7 +111,7 @@ map global user <a-n>   -docstring 'prev lint error'        ': lint-previous-err
 map global user e       -docstring 'eval selection'         ': eval %val{selection}<ret>'
 map global user c       -docstring 'char info'              ': show-char-info<ret>'
 map global user h       -docstring 'selection hull'         ': hull<ret>'
-map global user K       -docstring 'man'                    ': man<ret>'
+map global user k       -docstring 'man'                    ': select-word-better; man<ret>'
 map global user g       -docstring 'git'                    ': enter-user-mode git<ret>'
 map global user b       -docstring 'buffers…'               ': enter-buffers-mode<ret>'
 map global user B       -docstring 'buffers (lock)…'        ': enter-user-mode -lock buffers<ret>'
@@ -126,6 +124,9 @@ map global user Y       -docstring 'yank clipboard'         ': exec "<lt>a-|>xse
 map global user <minus> -docstring '.c <-> .h'              ': c-family-alternative-file<ret>'
 map global user <plus>  -docstring 'switch to [+] buffer'   ': switch-to-modified-buffer<ret>'
 map global user s       -docstring 'set option'             ': enter-user-mode set<ret>'
+map global user <,>     -docstring 'choose file'            ': file-chooser<ret>'
+map global user <.>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
+
 
 ## Configure plugins.
 # snippet.kak
@@ -145,7 +146,10 @@ hook global BufSetOption 'spell_tmp_file=.+' %{ alias global next spell-next; un
 ## File types.
 def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %arg{2} }
 
-filetype-hook man %{ rmhl window/number_lines }
+filetype-hook man %{
+  rmhl window/number_lines
+  set window scrolloff 1000,0
+}
 filetype-hook makefile|go %{
   try smarttab-disable
   set window indentwidth 0
@@ -287,16 +291,6 @@ EOF
   }
 }
 
-# This is kind of silly.
-def addhl-named -params 2.. \
-  -docstring %{
-    addhl-named <scope>/<name> <type> <type params>...:
-      add a highlighter with a given name} \
-  %{
-  eval %sh{echo "addhl '$(dirname "$1")/' group '$(basename "$1")'"}
-  addhl %arg{@}
-}
-
 ## More:
 # Git extras.
 def git-show-blamed-commit %{
@@ -311,8 +305,8 @@ def git-log-lines %{
 }
 def git-toggle-blame %{
   try %{
-    addhl window group hlflags_git_blame_flags
-    rmhl window/hlflags_git_blame_flags
+    addhl window/git-blame group
+    rmhl window/git-blame
     git blame
   } catch %{
     git hide-blame
@@ -350,7 +344,7 @@ def smarttab-disable %{ rmhooks window smarttab }
 # What I really want is to only not highlight trailing whitespace as I'm
 # inserting it, but that doesn't seem possible right now.
 def show-trailing-whitespace-enable %{
-  addhl-named window/TrailingWhitespace regex \h+$ 0:TrailingWhitespaceActive
+  addhl window/TrailingWhitespace regex \h+$ 0:TrailingWhitespaceActive
   face window TrailingWhitespaceActive TrailingWhitespace
   hook -group trailing-whitespace window ModeChange 'normal:insert' \
     %{ face window TrailingWhitespaceActive '' }
@@ -394,7 +388,6 @@ map global set w ':set window ' -docstring 'window'
 face global VolatileHighlighting white,yellow
 def volatile-highlighting-enable %{
   hook window -group volatile-highlighting NormalKey [ydcpP] %{ try %{
-    addhl window/ group VolatileHighlighting
     addhl window/VolatileHighlighting dynregex '\Q%reg{"}\E' 0:Volatile
     hook window -group volatile-highlighting-active NormalKey [^ydcpP]|..+ %{
       rmhl window/VolatileHighlighting
@@ -413,7 +406,6 @@ def volatile-highlighting-disable %{
 face global Search white,yellow
 def search-highlighting-enable %{
   hook window -group search-highlighting NormalKey [/?*nN]|<a-[/?*nN]> %{ try %{
-    addhl window/ group SearchHighlighting
     addhl window/SearchHighlighting dynregex '%reg{/}' 0:Search
   }}
   hook window -group search-highlighting NormalKey <esc> %{ rmhl window/SearchHighlighting }
