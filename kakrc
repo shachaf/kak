@@ -2,6 +2,7 @@
 source "%val{config}/plugins/kakoune-buffers/buffers.kak"
 source "%val{config}/plugins/kakoune-find/find.kak"
 source "%val{config}/plugins/kakoune-phantom-selection/phantom-selection.kak"
+source "%val{config}/plugins/kakoune-mark/mark.kak"
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
@@ -23,10 +24,10 @@ colorscheme desertex; face global comment rgb:7ccd7c
 
 hook global WinCreate .* %{
   addhl window/ wrap
-  addhl window/ number_lines -relative -hlcursor
-  addhl window/ show_whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
+  addhl window/ number-lines -relative -hlcursor
+  addhl window/ show-whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
   face window Whitespace cyan
-  addhl window/ show_matching
+  addhl window/ show-matching
   addhl window/VisibleWords regex \b(?:TODO|FIXME|XXX)\b 0:default+rb
 
   smarttab-enable
@@ -127,6 +128,8 @@ map global user s       -docstring 'set option'             ': enter-user-mode s
 map global user <,>     -docstring 'choose file'            ': file-chooser<ret>'
 map global user <.>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
 
+map global user / ': mark-word<ret>' -docstring 'mark word'
+map global user ? ': mark-clear<ret>' -docstring 'clear marks'
 
 ## Configure plugins.
 # snippet.kak
