@@ -21,21 +21,20 @@ set global tabstop 8
 # lots of contrast, easy to distinguish faces, easy to read comments... It
 # doesn't seem so unreasonable.
 colorscheme desertex; face global comment rgb:7ccd7c
+face global Whitespace cyan
 
 hook global WinCreate .* %{
-  addhl window/ wrap
-  addhl window/ number-lines -relative -hlcursor
-  addhl window/ show-whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
-  face window Whitespace cyan
-  addhl window/ show-matching
-  addhl window/VisibleWords regex \b(?:TODO|FIXME|XXX)\b 0:default+rb
+  addhl window/wrap wrap
+  addhl window/number-lines number-lines -relative -hlcursor
+  addhl window/show-whitespaces show-whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
+  addhl window/show-matching show-matching
+  addhl window/VisibleWords regex \b(?:FIXME|TODO|XXX)\b 0:default+rb
 
   smarttab-enable
   tab-completion-enable
   show-trailing-whitespace-enable; face window TrailingWhitespace default,magenta
   search-highlighting-enable; face window Search +bi
   volatile-highlighting-enable; face window Volatile +bi
-  #tex-completion-enable
 
   addhl window/SnippetHole \
     regex (¹)|(²)|(³)|(⁴)|(⁵)|(⁶)|(⁷) \
@@ -125,8 +124,8 @@ map global user Y       -docstring 'yank clipboard'         ': exec "<lt>a-|>xse
 map global user <minus> -docstring '.c <-> .h'              ': c-family-alternative-file<ret>'
 map global user <plus>  -docstring 'switch to [+] buffer'   ': switch-to-modified-buffer<ret>'
 map global user s       -docstring 'set option'             ': enter-user-mode set<ret>'
-map global user <,>     -docstring 'choose file'            ': file-chooser<ret>'
-map global user <.>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
+map global user <,>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
+map global user <.>     -docstring 'choose file'            ': file-chooser<ret>'
 
 map global user / ': mark-word<ret>' -docstring 'mark word'
 map global user ? ': mark-clear<ret>' -docstring 'clear marks'
@@ -315,7 +314,7 @@ def git-toggle-blame %{
     git hide-blame
   }
 }
-def git-hide-diff %{ rmhl window/hlflags_git_diff_flags }
+def git-hide-diff %{ rmhl window/git-diff }
 
 declare-user-mode git
 map global git b ': git-toggle-blame<ret>'       -docstring 'blame (toggle)'
@@ -386,21 +385,23 @@ map global set w ':set window ' -docstring 'window'
 
 
 # volatile-highlighting.kak with some changes. Mainly:
-# * Match more keys in the disable hook
-# * Remove the disable hook when not active, to clean up debug hook log
+# * Match more keys in the deactivate hook
+# * Remove the deactivate hook when not active, to clean up debug hook log
+def -hidden volatile-highlighting-deactivate %{
+  rmhl window/VolatileHighlighting
+  rmhooks window volatile-highlighting-active
+}
+
 face global VolatileHighlighting white,yellow
 def volatile-highlighting-enable %{
   hook window -group volatile-highlighting NormalKey [ydcpP] %{ try %{
     addhl window/VolatileHighlighting dynregex '\Q%reg{"}\E' 0:Volatile
-    hook window -group volatile-highlighting-active NormalKey [^ydcpP]|..+ %{
-      rmhl window/VolatileHighlighting
-      rmhooks window volatile-highlighting-active
-    }
+    hook window -group volatile-highlighting-active NormalKey '[^ydcpP]|..+' volatile-highlighting-deactivate
+    hook window -group volatile-highlighting-active InsertKey '.*'           volatile-highlighting-deactivate
   }}
 }
 def volatile-highlighting-disable %{
-  rmhl window/VolatileHighlighting
-  rmhooks window volatile-highlighting-active
+  volatile-highlighting-deactivate
   rmhooks window volatile-highlighting
 }
 
