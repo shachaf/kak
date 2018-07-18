@@ -45,6 +45,8 @@ hook global WinCreate .* %{
     5:default,blue \
     6:default,rgb:6F00FF \
     7:default,rgb:9F00FF
+
+  hook window InsertKey '<mouse:press:.*>' %{ exec '<c-u>' }
 }
 
 ## Maps.
@@ -91,14 +93,14 @@ map global insert <c-k>   '<a-;>: char-input-begin "%val{config}/scripts/char-in
 map global insert <a-k>   '<a-;>: char-input-begin "%val{config}/scripts/char-input-tex.txt"<ret>'
 map global insert <a-K>   '<a-;>: char-input-begin "%val{config}/scripts/char-input-unicode.txt"<ret>'
 map global insert <c-a-k> '<a-;>: char-input-begin "%val{config}/local/char-input-extra.txt"<ret>'
-map global insert        '\<a-;>: char-input-begin "%val{config}/scripts/char-input-tex.txt" h<ret>' # <c-\>
+map global insert <>     '\<a-;>: char-input-begin "%val{config}/scripts/char-input-tex.txt" h<ret>' # <c-\>
 
 map global insert <c-w> '<a-;>: exec -draft b<lt>a-d<gt><ret>'
 
 # Available normal keys:
 # D + ^ <ret> <del> <ins> <f4>-<f11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
-# <c-[acgkmqrtwx]> <c-space> (\0) <c-]> () <c-/> () <c-\> ()
+# <c-[acgkmqrtwx]> <c-space> (\0) <c-]> () <c-/> ()
 
 # User map.
 map global user m       -docstring 'make'                   ': make<ret>'
@@ -106,6 +108,7 @@ map global user a       -docstring 'select all occurrences' ': select-all-occurr
 map global user =       -docstring 'format text'            ': format-text<ret>'
 map global user w       -docstring 'write'                  ': w<ret>'
 map global user q       -docstring 'quit'                   ': q<ret>'
+map global user Z       -docstring 'write-quit'             ': wq<ret>'
 map global user n       -docstring 'next lint error'        ': lint-next-error<ret>'
 map global user <a-n>   -docstring 'prev lint error'        ': lint-previous-error<ret>'
 map global user e       -docstring 'eval selection'         ': eval %val{selection}<ret>'
@@ -127,7 +130,7 @@ map global user s       -docstring 'set option'             ': enter-user-mode s
 map global user <,>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
 map global user <.>     -docstring 'choose file'            ': file-chooser<ret>'
 
-map global user / ': mark-word<ret>' -docstring 'mark word'
+map global user / ': mark-word<ret>'  -docstring 'mark word'
 map global user ? ': mark-clear<ret>' -docstring 'clear marks'
 
 ## Configure plugins.
@@ -149,7 +152,7 @@ hook global BufSetOption 'spell_tmp_file=.+' %{ alias global next spell-next; un
 def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %arg{2} }
 
 filetype-hook man %{
-  rmhl window/number_lines
+  rmhl window/number-lines
   set window scrolloff 1000,0
 }
 filetype-hook makefile|go %{
@@ -293,6 +296,18 @@ EOF
   }
 }
 
+def del-trailing-whitespace %{
+  try %{
+    eval -draft %{
+      exec '%s\h+$<ret><a-d>'
+      eval -client %val{client} echo -- \
+        %sh{ echo "deleted trailing whitespace on $(echo "$kak_selections_desc" | wc -w) lines" }
+    }
+  } catch %{
+    echo 'no trailing whitespace'
+  }
+}
+
 ## More:
 # Git extras.
 def git-show-blamed-commit %{
@@ -376,6 +391,18 @@ def tab-completion-enable %{
 }
 def tab-completion-disable %{ rmhooks window tab-completion }
 
+# Basic autoindent.
+def -hidden basic-autoindent-on-newline %{
+  eval -draft -itersel %{
+    try %{ exec -draft ';K<a-&>' }                      # copy indentation from previous line
+    try %{ exec -draft ';k<a-x><a-k>^\h+$<ret>H<a-d>' } # remove whitespace from autoindent on previous line
+  }
+}
+def basic-autoindent-enable %{
+  hook -group basic-autoindent window InsertChar '\n' basic-autoindent-on-newline
+  hook -group basic-autoindent window WinSetOption 'filetype=.*' basic-autoindent-disable
+}
+def basic-autoindent-disable %{ rmhooks window basic-autoindent }
 
 # This is also kind of silly.
 declare-user-mode set
