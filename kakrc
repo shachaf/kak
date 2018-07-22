@@ -47,6 +47,8 @@ hook global WinCreate .* %{
     7:default,rgb:9F00FF
 
   hook window InsertKey '<mouse:press:.*>' %{ exec '<c-u>' }
+
+  alias window jump-to-definition ctags-search
 }
 
 ## Maps.
@@ -75,7 +77,7 @@ map global normal <f2> ': new exec :<ret>'
 map global normal   <f12> ': select-word-better<ret>'
 map global normal <s-f12> ': select-WORD-better<ret>'
 
-map global normal <a-]> ': select-word-better; ctags-search<ret>'
+map global normal <a-minus> ': select-word-better; jump-to-definition<ret>'
 
 map global normal   <#> ': comment-line-better<ret>'
 map global normal <a-#> ': comment-block<ret>'
@@ -114,7 +116,7 @@ map global user <a-n>   -docstring 'prev lint error'        ': lint-previous-err
 map global user e       -docstring 'eval selection'         ': eval %val{selection}<ret>'
 map global user c       -docstring 'char info'              ': show-char-info<ret>'
 map global user h       -docstring 'selection hull'         ': hull<ret>'
-map global user k       -docstring 'man'                    ': select-word-better; man<ret>'
+map global user k       -docstring 'man'                    ': select-word-better; man-selection-with-count<ret>'
 map global user g       -docstring 'git'                    ': enter-user-mode git<ret>'
 map global user b       -docstring 'buffers…'               ': enter-buffers-mode<ret>'
 map global user B       -docstring 'buffers (lock)…'        ': enter-user-mode -lock buffers<ret>'
@@ -129,6 +131,7 @@ map global user <plus>  -docstring 'switch to [+] buffer'   ': switch-to-modifie
 map global user s       -docstring 'set option'             ': enter-user-mode set<ret>'
 map global user <,>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
 map global user <.>     -docstring 'choose file'            ': file-chooser<ret>'
+map global user f       -docstring 'format'                 ': format<ret>'
 
 map global user / ': mark-word<ret>'  -docstring 'mark word'
 map global user ? ': mark-clear<ret>' -docstring 'clear marks'
@@ -159,6 +162,11 @@ filetype-hook makefile|go %{
   try smarttab-disable
   set window indentwidth 0
 }
+filetype-hook go %{
+  alias window format go-format-use-goimports
+  alias window jump-to-definition go-jump
+  # TODO: lint
+}
 filetype-hook c|cpp %{
   clang-enable-autocomplete; clang-enable-diagnostics
   alias window lint clang-parse
@@ -170,6 +178,13 @@ def Main  %{     rename-client Main;  set global jumpclient  Main  }
 def Tools %{ new rename-client Tools; set global toolsclient Tools }
 def Docs  %{ new rename-client Docs;  set global docsclient  Docs  }
 def IDE   %{ Main; Tools; Docs }
+
+def Alternate %{
+  new rename-client Alternate
+  set global toolsclient Alternate
+  set global docsclient Alternate
+}
+def HalfIDE %{ Main; Alternate }
 
 # Bind things that do't take numeric arguments to the keys 0/<backspace>.
 # Usage: map global normal 0 ': zero "exec gh"<ret>'
@@ -305,6 +320,16 @@ def del-trailing-whitespace %{
     }
   } catch %{
     echo 'no trailing whitespace'
+  }
+}
+
+def go-format-use-goimports %{ go-format -use-goimports }
+
+def man-selection-with-count %{
+  man %sh{
+    page="$kak_selection"
+    [ "$kak_count" != 0 ] && page="${page}(${kak_count})"
+    echo "$page"
   }
 }
 
