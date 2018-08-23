@@ -30,13 +30,16 @@ def char-input-begin -params 1..2 \
     # Fail if completion was already ongoing.
     addhl window/char-input-ongoing replace-ranges char_input_ongoing_range_content
     set window char_input_ongoing_data %arg{1}
-    set window char_input_ongoing_range_content ""
+    set window char_input_ongoing_range_content 0
     hook -group char-input-ongoing window ModeChange 'insert:normal' char-input-end
     hook -group char-input-ongoing window InsertMove .* char-input-end
     hook -group char-input-ongoing window InsertKey \
       '.|<(minus|plus|space|lt|gt|backspace|tab)>' char-input-complete
     hook -group char-input-ongoing window InsertKey \
       '<([^mpslgbt]|s-.*|(pageup|pagedown|left)>).*' char-input-end
+    eval -draft %{
+      #set window char_input_ongoing_anchor "%val{cursor_line}.%val{cursor_column}"
+    }
     eval -draft %{
       exec "<esc><space>;%arg{2}"
       set window char_input_ongoing_anchor "%val{cursor_line}.%val{cursor_column}"
@@ -84,7 +87,7 @@ def -hidden char-input-end %{
     set window char_input_ongoing_cursor ""
     set window char_input_ongoing_replacement ""
     set window char_input_ongoing_hint ""
-    set window char_input_ongoing_range_content ""
+    set window char_input_ongoing_range_content 0
     set window char_input_ongoing_data ""
   }
   echo
@@ -117,7 +120,7 @@ def -hidden char-input-complete %{
         set window char_input_ongoing_range_content \
           %val{timestamp} "%val{selection_desc}|{+u}%opt{char_input_ongoing_replacement}"
       } catch %{
-        set window char_input_ongoing_range_content ""
+        set window char_input_ongoing_range_content 0
       }
     }
   }

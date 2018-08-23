@@ -3,6 +3,7 @@ source "%val{config}/plugins/kakoune-buffers/buffers.kak"
 source "%val{config}/plugins/kakoune-find/find.kak"
 source "%val{config}/plugins/kakoune-phantom-selection/phantom-selection.kak"
 source "%val{config}/plugins/kakoune-mark/mark.kak"
+source "%val{config}/plugins/kakoune-filetree/filetree.kak"
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
@@ -20,7 +21,8 @@ set global tabstop 8
 # None of these colorschemes do what I want: Dark background, bright colors,
 # lots of contrast, easy to distinguish faces, easy to read comments... It
 # doesn't seem so unreasonable.
-colorscheme desertex; face global comment rgb:7ccd7c
+#colorscheme desertex; face global comment rgb:7ccd7c
+colorscheme default
 face global Whitespace cyan
 
 hook global WinCreate .* %{
@@ -99,6 +101,9 @@ map global insert <>     '\<a-;>: char-input-begin "%val{config}/scripts/char-i
 
 map global insert <c-w> '<a-;>: exec -draft b<lt>a-d<gt><ret>'
 
+map global prompt <a-i> '(?i)'
+map global prompt <a-o> '(?S)'
+
 # Available normal keys:
 # D + ^ <ret> <del> <ins> <f4>-<f11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
@@ -135,6 +140,7 @@ map global user f       -docstring 'format'                 ': format<ret>'
 
 map global user / ': mark-word<ret>'  -docstring 'mark word'
 map global user ? ': mark-clear<ret>' -docstring 'clear marks'
+map global user _ ': other-client-buffer<ret>' -docstring 'other client buffer'
 
 ## Configure plugins.
 # snippet.kak
@@ -150,6 +156,14 @@ hook global BufOpenFifo '\*make\*' %{ alias global next make-next-error; alias g
 hook global BufOpenFifo '\*grep\*' %{ alias global next grep-next-match; alias global prev grep-previous-match }
 hook global BufCreate   '\*find\*' %{ alias global next find-next-match; alias global prev find-previous-match }
 hook global BufSetOption 'spell_tmp_file=.+' %{ alias global next spell-next; unalias global prev }
+
+hook -group opendir global \
+  RuntimeError ".*\d+:\d+: '\w+' (.*): is a directory" \
+  %{
+    echo
+    file-chooser %val{hook_param_capture_1}
+}
+
 
 ## File types.
 def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %arg{2} }
@@ -332,6 +346,19 @@ def man-selection-with-count %{
     echo "$page"
   }
 }
+
+def -docstring %{switch to the other client's buffer} \
+  other-client-buffer \
+  %{ eval %sh{
+  if [ "$(echo "$kak_client_list" | wc -w)" -ne 2 ]; then
+    echo "fail 'only works with two clients'"
+    exit
+  fi
+  set -- $kak_client_list
+  other_client="$1"
+  [ "$other_client" = "$kak_client" ] && other_client="$2"
+  echo "eval -client '$other_client' 'eval -client ''$kak_client'' \"buffer ''%val{bufname}''\"'"
+}}
 
 ## More:
 # Git extras.
