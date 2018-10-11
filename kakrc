@@ -12,7 +12,7 @@ source "%val{config}/scripts/char-input.kak"
 
 ## General settings.
 set global ui_options ncurses_assistant=off
-set global startup_info_version 20180413
+set global startup_info_version 20180904
 set global termcmd 'gnome-terminal -e'
 
 set global indentwidth 2
@@ -125,12 +125,12 @@ map global user k       -docstring 'man'                    ': select-word-bette
 map global user g       -docstring 'git'                    ': enter-user-mode git<ret>'
 map global user b       -docstring 'buffers…'               ': enter-buffers-mode<ret>'
 map global user B       -docstring 'buffers (lock)…'        ': enter-user-mode -lock buffers<ret>'
-map global user P       -docstring 'paste primary before'   ': exec        "!xsel -op<lt>ret>"<ret>'
-map global user p       -docstring 'paste primary after'    ': exec "<lt>a-!>xsel -op<lt>ret>"<ret>'
-map global user O       -docstring 'paste clipboard before' ': exec        "!xsel -ob<lt>ret>"<ret>'
-map global user o       -docstring 'paste clipboard after'  ': exec "<lt>a-!>xsel -ob<lt>ret>"<ret>'
-map global user y       -docstring 'yank primary'           ': exec "<lt>a-|>xsel -ip<lt>ret>"<ret>'
-map global user Y       -docstring 'yank clipboard'         ': exec "<lt>a-|>xsel -ib<lt>ret>"<ret>'
+map global user P       -docstring 'paste clipboard before' ': exec        "!xsel -ob<lt>ret>"<ret>'
+map global user p       -docstring 'paste clipboard after'  ': exec "<lt>a-!>xsel -ob<lt>ret>"<ret>'
+map global user O       -docstring 'paste primary before'   ': exec        "!xsel -op<lt>ret>"<ret>'
+map global user o       -docstring 'paste primary after'    ': exec "<lt>a-!>xsel -op<lt>ret>"<ret>'
+map global user y       -docstring 'yank clipboard'         ': exec "<lt>a-|>xsel -ib<lt>ret>"<ret>'
+map global user Y       -docstring 'yank primary'           ': exec "<lt>a-|>xsel -ip<lt>ret>"<ret>'
 map global user <minus> -docstring '.c <-> .h'              ': c-family-alternative-file<ret>'
 map global user <plus>  -docstring 'switch to [+] buffer'   ': switch-to-modified-buffer<ret>'
 map global user s       -docstring 'set option'             ': enter-user-mode set<ret>'
@@ -185,6 +185,7 @@ filetype-hook c|cpp %{
   clang-enable-autocomplete; clang-enable-diagnostics
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
+  map window object ';' '/\*,\*/<ret>'
 }
 
 ## Defs.

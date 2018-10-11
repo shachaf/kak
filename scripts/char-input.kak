@@ -1,4 +1,5 @@
 # TODO: Some keys, e.g. <up>/<down>/<left>, leave the cursor in the wrong position.
+# TODO: Insert completion popup is shown in the wrong position.
 # TODO: Escape /[{}:]/ in char_input_ongoing_range_content.
 # TODO: In theory this could support completions of more than a single character?
 # TODO: Make this work with multiple cursors.
