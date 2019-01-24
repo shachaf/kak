@@ -187,6 +187,7 @@ filetype-hook c|cpp %{
   alias window lint-next-error clang-diagnostics-next
   map window object ';' '/\*,\*/<ret>'
 }
+set global c_include_guard_style ""
 
 ## Defs.
 def Main  %{     rename-client Main;  set global jumpclient  Main  }
@@ -199,7 +200,7 @@ def Alternate %{
   set global toolsclient Alternate
   set global docsclient Alternate
 }
-def HalfIDE %{ Main; Alternate }
+def Two %{ Main; Alternate }
 
 # Bind things that do't take numeric arguments to the keys 0/<backspace>.
 # Usage: map global normal 0 ': zero "exec gh"<ret>'
