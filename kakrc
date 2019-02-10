@@ -48,7 +48,7 @@ hook global WinCreate .* %{
     6:default,rgb:6F00FF \
     7:default,rgb:9F00FF
 
-  hook window InsertKey '<mouse:press:.*>' %{ exec '<c-u>' }
+  hook window InsertKey '<mouse:press_left:.*>' %{ exec '<c-u>' }
 
   alias window jump-to-definition ctags-search
 }
@@ -187,7 +187,10 @@ filetype-hook c|cpp %{
   alias window lint-next-error clang-diagnostics-next
   map window object ';' '/\*,\*/<ret>'
 }
-set global c_include_guard_style ""
+set global c_include_guard_style ''
+filetype-hook '' %{
+  basic-autoindent-enable
+}
 
 ## Defs.
 def Main  %{     rename-client Main;  set global jumpclient  Main  }
@@ -452,8 +455,12 @@ def -hidden basic-autoindent-on-newline %{
     try %{ exec -draft ';k<a-x><a-k>^\h+$<ret>H<a-d>' } # remove whitespace from autoindent on previous line
   }
 }
+def -hidden basic-autoindent-trim %{
+  try %{ exec -draft '<a-x>' '1s^(\h+)$<ret>' '<a-d>' }
+}
 def basic-autoindent-enable %{
   hook -group basic-autoindent window InsertChar '\n' basic-autoindent-on-newline
+  hook -group basic-autoindent window ModeChange 'insert:normal' basic-autoindent-trim
   hook -group basic-autoindent window WinSetOption 'filetype=.*' basic-autoindent-disable
 }
 def basic-autoindent-disable %{ rmhooks window basic-autoindent }
