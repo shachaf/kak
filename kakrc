@@ -365,6 +365,18 @@ def -docstring %{switch to the other client's buffer} \
   echo "eval -client '$other_client' 'eval -client ''$kak_client'' \"buffer ''%val{bufname}''\"'"
 }}
 
+def tabby -params ..1 \
+  -docstring 'Tabby mode. Optional argument: Tabstop.' \
+  %{
+  try smarttab-disable
+  rmhl window/show-whitespaces
+  addhl window/show-whitespaces show-whitespaces -tab ' ' -tabpad ' ' -lf ' ' -spc ' ' -nbsp '⍽'
+  set window indentwidth 0
+  eval %sh{
+    [ -n "$1" ] && echo "set window tabstop $1"
+  }
+}
+
 ## More:
 # Git extras.
 def git-show-blamed-commit %{
