@@ -4,6 +4,7 @@ source "%val{config}/plugins/kakoune-find/find.kak"
 source "%val{config}/plugins/kakoune-phantom-selection/phantom-selection.kak"
 source "%val{config}/plugins/kakoune-mark/mark.kak"
 source "%val{config}/plugins/kakoune-filetree/filetree.kak"
+source "%val{config}/plugins/kakoune-gdb/gdb.kak"
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
@@ -17,6 +18,10 @@ set global termcmd 'gnome-terminal -e'
 
 set global indentwidth 2
 set global tabstop 8
+
+
+set global modelinefmt '%val{bufname} %val{cursor_line}:%val{cursor_char_column} {{context_info}} {{mode_info}} - %val{client}@[%val{session}]' # Default modeline.
+set global modelinefmt  "%%opt{gdb_indicator} %opt{modelinefmt}"
 
 # None of these colorschemes do what I want: Dark background, bright colors,
 # lots of contrast, easy to distinguish faces, easy to read comments... It
@@ -91,6 +96,9 @@ map global normal <c-p>   ': lint<ret>'
 map global normal <c-n>   ': next<ret>'
 map global normal <c-a-n> ': prev<ret>'
 
+map global normal <del>   ': enter-user-mode       gdb<ret>'
+map global normal <s-del> ': enter-user-mode -lock gdb<ret>'
+
 map global insert <a-[> '<esc>: try replace-next-hole catch snippet-word<ret>'
 
 map global insert <c-k>   '<a-;>: char-input-begin "%val{config}/scripts/char-input-digraph.txt"<ret>'
@@ -105,7 +113,7 @@ map global prompt <a-i> '(?i)'
 map global prompt <a-o> '(?S)'
 
 # Available normal keys:
-# D + ^ <ret> <del> <ins> <f4>-<f11> 0 <backspace> (with :zero/:backspace)
+# D + ^ <ret> <ins> <f4>-<f11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
 # <c-[acgkmqrtwx]> <c-space> (\0) <c-]> () <c-/> ()
 
@@ -170,7 +178,6 @@ def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %ar
 
 filetype-hook man %{
   rmhl window/number-lines
-  set window scrolloff 1000,0
 }
 filetype-hook makefile|go %{
   try smarttab-disable
@@ -186,6 +193,8 @@ filetype-hook c|cpp %{
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
   map window object ';' '/\*,\*/<ret>'
+
+  set window clang_options '-Wno-pragma-once-outside-header'
 }
 set global c_include_guard_style ''
 filetype-hook '' %{
@@ -204,6 +213,8 @@ def Alternate %{
   set global docsclient Alternate
 }
 def Two %{ Main; Alternate }
+
+alias global g grep
 
 # Bind things that do't take numeric arguments to the keys 0/<backspace>.
 # Usage: map global normal 0 ': zero "exec gh"<ret>'
@@ -365,7 +376,7 @@ def -docstring %{switch to the other client's buffer} \
   echo "eval -client '$other_client' 'eval -client ''$kak_client'' \"buffer ''%val{bufname}''\"'"
 }}
 
-def tabby -params ..1 \
+def Tabby -params ..1 \
   -docstring 'Tabby mode. Optional argument: Tabstop.' \
   %{
   try smarttab-disable
@@ -411,6 +422,62 @@ map global git H ': git-hide-diff<ret>'          -docstring 'hide diff'
 map global git w ': git-show-blamed-commit<ret>' -docstring 'show blamed commit'
 map global git L ': git-log-lines<ret>'          -docstring 'log blame'
 
+# gdb extras.
+declare-option str executable
+
+def gdb-session-new-defaults %{
+  eval %sh{[ -z "$kak_opt_executable" ] && echo "fail '%opt{executable} not set'"}
+  gdb-session-new %opt{executable}
+}
+
+# Not sure about tbreak vs. advance. They do similar things in slightly different ways?
+# tbreak has a problem with leftover temporary breakpoints?
+# advance had some other problem I don't remember
+def gdb-tbreak %{
+  eval %sh{
+    if [ "$kak_selection_desc" != "$kak_selections_desc" ]; then
+      echo "fail 'multiple selections'"
+      exit
+    fi
+    cursor="%{kak_selection_desc#*,}"
+    cursor_line="%{cursor%.*}"
+    selection_line="${kak_selection_desc%%.*}"
+    filename="$kak_buffile"
+    echo "gdb-cmd tbreak $filename:$selection_line"
+  }
+}
+
+def gdb-to-cursor %{ gdb-tbreak; gdb-continue-or-run }
+
+hook global GlobalSetOption 'gdb_program_running=true' %{ face global GdbBreakpoint red,default }
+hook global GlobalSetOption 'gdb_program_running=false' %{ face global GdbBreakpoint yellow,default }
+
+declare-user-mode gdb
+map global gdb <del>       ': gdb-session-new-defaults<ret>' -docstring 'new session'
+map global gdb <backspace> ': gdb-session-stop<ret>'         -docstring 'stop session'
+map global gdb r           ': gdb-run<ret>'                  -docstring 'run'
+map global gdb R           ': gdb-cmd start<ret>'            -docstring 'start'
+map global gdb k           ': gdb-cmd kill<ret>'             -docstring 'kill'
+map global gdb s           ': gdb-step<ret>'                 -docstring 'step'
+map global gdb n           ': gdb-next<ret>'                 -docstring 'next line'
+map global gdb f           ': gdb-finish<ret>'               -docstring 'finish'
+map global gdb c           ': gdb-continue<ret>'             -docstring 'continue' # swap with C?
+map global gdb C           ': gdb-continue-or-run<ret>'      -docstring 'continue/run'
+map global gdb j           ': gdb-jump-to-location<ret>'     -docstring 'jump to IP'
+map global gdb J           ': gdb-toggle-autojump<ret>'      -docstring 'toggle autojump'
+map global gdb b           ': gdb-toggle-breakpoint<ret>'    -docstring 'toggle breakpoint'
+map global gdb p           ': gdb-print<ret>'                -docstring 'print selection expression'
+map global gdb t           ': gdb-backtrace<ret>'            -docstring 'backtrace'
+map global gdb <up>        ': gdb-backtrace-up<ret>'         -docstring 'backtrace ↑'
+map global gdb <down>      ': gdb-backtrace-down<ret>'       -docstring 'backtrace ↓'
+map global gdb :           ':gdb-cmd '                       -docstring 'custom command' # ?
+map global gdb <space>     ': gdb-to-cursor<ret>'            -docstring 'to cursor'
+map global gdb m           ': gdb-cmd kill; make<ret>'       -docstring 'kill and make' # ?
+# Other gdb commands:
+# gdb-{set,clear}-breakpoint gdb-{enable,disable}-autojump gdb-session-connect
+# For some reason gdb-start is less well-behaved than gdb-cmd start?
+# In particular gdb-start; gdb-cmd advance file:line doesn't work well,
+# because it gets stopped on the temporary breakpoint gdb-start sets (?).
 
 # smarttab.kak?
 # Emulate expandtab smarttab, kind of.
@@ -419,7 +486,7 @@ def smarttab-enable %{
   hook -group smarttab window InsertChar \t %{ exec -draft -itersel "h%opt{indentwidth}@" }
   hook -group smarttab window InsertDelete ' ' %{
     eval -draft -itersel %{ try %{
-      exec 'hGh' "s\A((.{%opt{indentwidth}})*[^ ]*) *\z<ret>" '"1R'
+      exec 'hGh' "s\A(( {%opt{indentwidth}})*) *\z<ret>" '"1R'
     }}
   }
 }
