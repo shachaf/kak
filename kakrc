@@ -193,11 +193,10 @@ filetype-hook c|cpp %{
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
   map window object ';' '/\*,\*/<ret>'
-
-  set window clang_options '-Wno-pragma-once-outside-header'
 }
+set global clang_options '-Wno-pragma-once-outside-header'
 set global c_include_guard_style ''
-filetype-hook '' %{
+filetype-hook '|plain' %{
   basic-autoindent-enable
 }
 
@@ -453,7 +452,7 @@ hook global GlobalSetOption 'gdb_program_running=true' %{ face global GdbBreakpo
 hook global GlobalSetOption 'gdb_program_running=false' %{ face global GdbBreakpoint yellow,default }
 
 declare-user-mode gdb
-map global gdb <del>       ': gdb-session-new-defaults<ret>' -docstring 'new session'
+map global gdb <ret>       ': gdb-session-new-defaults<ret>' -docstring 'new session'
 map global gdb <backspace> ': gdb-session-stop<ret>'         -docstring 'stop session'
 map global gdb r           ': gdb-run<ret>'                  -docstring 'run'
 map global gdb R           ': gdb-cmd start<ret>'            -docstring 'start'
