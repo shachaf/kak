@@ -26,8 +26,8 @@ set global modelinefmt  "%%opt{gdb_indicator} %opt{modelinefmt}"
 # None of these colorschemes do what I want: Dark background, bright colors,
 # lots of contrast, easy to distinguish faces, easy to read comments... It
 # doesn't seem so unreasonable.
-#colorscheme desertex; face global comment rgb:7ccd7c
-colorscheme default
+colorscheme desertex; face global comment rgb:7ccd7c
+#colorscheme default
 face global Whitespace cyan
 
 hook global WinCreate .* %{
@@ -192,7 +192,7 @@ filetype-hook c|cpp %{
   clang-enable-autocomplete; clang-enable-diagnostics
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
-  map window object ';' '/\*,\*/<ret>'
+  map window object ';' 'c/\*,\*/<ret>' -docstring '/* comment */'
 }
 set global clang_options '-Wno-pragma-once-outside-header'
 set global c_include_guard_style ''
