@@ -5,16 +5,23 @@ source "%val{config}/plugins/kakoune-phantom-selection/phantom-selection.kak"
 source "%val{config}/plugins/kakoune-mark/mark.kak"
 source "%val{config}/plugins/kakoune-filetree/filetree.kak"
 source "%val{config}/plugins/kakoune-gdb/gdb.kak"
+source "%val{config}/plugins/kakoune-expand/expand.kak"
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
 source "%val{config}/scripts/snippet.kak"
 source "%val{config}/scripts/char-input.kak"
 
+# Work around bug?
+require-module x11
+require-module clang
+require-module c-family
+
 ## General settings.
 set global ui_options ncurses_assistant=off
 set global startup_info_version 20180904
-set global termcmd 'gnome-terminal -e'
+set global termcmd 'gnome-terminal -- bash -c'
+set global grepcmd 'rg -Hn'
 
 set global indentwidth 2
 set global tabstop 8
@@ -80,6 +87,7 @@ map global normal <minus> 'ga' # I can probably find a better use for <minus>.
 
 map global normal <f1> ':new '
 map global normal <f2> ': new exec :<ret>'
+map global normal <f3> ': Two<ret>'
 
 map global normal   <f12> ': select-word-better<ret>'
 map global normal <s-f12> ': select-WORD-better<ret>'
@@ -98,6 +106,8 @@ map global normal <c-a-n> ': prev<ret>'
 
 map global normal <del>   ': enter-user-mode       gdb<ret>'
 map global normal <s-del> ': enter-user-mode -lock gdb<ret>'
+
+map global normal D ': expand<ret>'
 
 map global insert <a-[> '<esc>: try replace-next-hole catch snippet-word<ret>'
 
@@ -155,8 +165,26 @@ map global user _ ': other-client-buffer<ret>' -docstring 'other client buffer'
 set global snippet_program "%val{config}/scripts/snippet"
 set global snippet_file "%val{config}/local/snippets.yaml"
 set global snippet_hole_pattern %{%%%\{\w+\}%%%|[⁰¹²³⁴⁵⁶⁷💙💚💛💜💝💟🧡]}
-## char-input-mode.kak
+# char-input-mode.kak
 set global char_input_auto_data "%val{config}/scripts/char-input-tex.txt"
+# expand.kak
+set global expand_commands %{
+    expand-impl %{ exec '<a-i>(' }
+    expand-impl %{ exec '<a-a>(' }
+    expand-impl %< exec '<a-i>{' >
+    expand-impl %< exec '<a-a>}' >
+    expand-impl %{ exec '<a-i>[' }
+    expand-impl %{ exec '<a-a>[' }
+    expand-impl %{ exec '<a-i><' }
+    expand-impl %{ exec '<a-a><' }
+    expand-impl %{ exec '<a-i>"' }
+    expand-impl %{ exec '<a-a>"' }
+    expand-impl %{ exec "<a-i>'" }
+    expand-impl %{ exec "<a-a>'" }
+    expand-impl %{ exec '<a-i>i' }
+    expand-impl %{ exec '<a-:><a-;>k<a-K>^$<ret><a-i>i' }
+    expand-impl %{ exec '<a-:>j<a-K>^$<ret><a-i>i' }
+}
 
 ## Hooks.
 # I've moved most of this section elsewhere -- it's probably superfluous now.
@@ -223,7 +251,10 @@ def backspace -params 1 %{ eval %sh{[ "$kak_count" = 0 ] && echo "$1" || echo "e
 
 # Sort of a replacement for gq.
 #def format-text %{ exec '|fmt<ret>' }
-def format-text %{ exec '|par -w%opt{autowrap_column}<a-!><ret>' }
+def format-text %{
+  #exec '|par -w%opt{autowrap_column}<a-!><ret>'
+  exec '|par "rTbqR" "B=.,?_A_a Q=_s>|" -w%opt{autowrap_column}<a-!><ret>'
+}
 
 def select-word-better %{
   # Note: \w doesn't use extra_word_chars.
