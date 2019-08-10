@@ -1,3 +1,4 @@
+# TODO: There have been some quoting changes -- see kak_quoted_
 ## Sources.
 source "%val{config}/plugins/kakoune-buffers/buffers.kak"
 source "%val{config}/plugins/kakoune-find/find.kak"
@@ -18,8 +19,8 @@ require-module clang
 require-module c-family
 
 ## General settings.
-set global ui_options ncurses_assistant=off
-set global startup_info_version 20180904
+set global ui_options ncurses_assistant=off ncurses_wheel_down_button=0
+set global startup_info_version 20190701
 set global termcmd 'gnome-terminal -- bash -c'
 set global grepcmd 'rg -Hn'
 
@@ -85,12 +86,12 @@ map global normal <c-e> 'jvj'; map global normal <c-y> 'kvk'
 
 map global normal <minus> 'ga' # I can probably find a better use for <minus>.
 
-map global normal <f1> ':new '
-map global normal <f2> ': new exec :<ret>'
-map global normal <f3> ': Two<ret>'
+map global normal <F1> ':new '
+map global normal <F2> ': new exec :<ret>'
+map global normal <F3> ': Two<ret>'
 
-map global normal   <f12> ': select-word-better<ret>'
-map global normal <s-f12> ': select-WORD-better<ret>'
+map global normal   <F12> ': select-word-better<ret>'
+map global normal <s-F12> ': select-WORD-better<ret>'
 
 map global normal <a-minus> ': select-word-better; jump-to-definition<ret>'
 
@@ -123,7 +124,7 @@ map global prompt <a-i> '(?i)'
 map global prompt <a-o> '(?S)'
 
 # Available normal keys:
-# D + ^ <ret> <ins> <f4>-<f11> 0 <backspace> (with :zero/:backspace)
+# D + ^ <ret> <ins> <F4>-<F11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
 # <c-[acgkmqrtwx]> <c-space> (\0) <c-]> () <c-/> ()
 
