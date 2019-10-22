@@ -32,7 +32,7 @@ def char-input-begin -params 1..2 \
     addhl window/char-input-ongoing replace-ranges char_input_ongoing_range_content
     set window char_input_ongoing_data %arg{1}
     set window char_input_ongoing_range_content 0
-    hook -group char-input-ongoing window ModeChange 'insert:normal' char-input-end
+    hook -group char-input-ongoing window ModeChange 'pop:insert:normal' char-input-end
     hook -group char-input-ongoing window InsertMove .* char-input-end
     hook -group char-input-ongoing window InsertKey \
       '.|<(minus|plus|space|lt|gt|backspace|tab)>' char-input-complete

@@ -13,20 +13,16 @@ source "%val{config}/scripts/colorscheme-browser.kak"
 source "%val{config}/scripts/snippet.kak"
 source "%val{config}/scripts/char-input.kak"
 
-# Work around bug?
-require-module x11
-require-module clang
-require-module c-family
+def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
 ## General settings.
 set global ui_options ncurses_assistant=off ncurses_wheel_down_button=0
 set global startup_info_version 20190701
-set global termcmd 'gnome-terminal -- bash -c'
 set global grepcmd 'rg -Hn'
+module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
 
 set global indentwidth 2
 set global tabstop 8
-
 
 set global modelinefmt '%val{bufname} %val{cursor_line}:%val{cursor_char_column} {{context_info}} {{mode_info}} - %val{client}@[%val{session}]' # Default modeline.
 set global modelinefmt  "%%opt{gdb_indicator} %opt{modelinefmt}"
@@ -223,8 +219,8 @@ filetype-hook c|cpp %{
   alias window lint-next-error clang-diagnostics-next
   map window object ';' 'c/\*,\*/<ret>' -docstring '/* comment */'
 }
-set global clang_options '-Wno-pragma-once-outside-header'
-set global c_include_guard_style ''
+module-hook clang %{ set global clang_options '-Wno-pragma-once-outside-header' }
+module-hook c-family %{ set global c_include_guard_style '' }
 filetype-hook '|plain' %{
   basic-autoindent-enable
 }
@@ -530,9 +526,9 @@ def smarttab-disable %{ rmhooks window smarttab }
 def show-trailing-whitespace-enable %{
   addhl window/TrailingWhitespace regex \h+$ 0:TrailingWhitespaceActive
   face window TrailingWhitespaceActive TrailingWhitespace
-  hook -group trailing-whitespace window ModeChange 'normal:insert' \
+  hook -group trailing-whitespace window ModeChange '(push|pop):normal:insert' \
     %{ face window TrailingWhitespaceActive '' }
-  hook -group trailing-whitespace window ModeChange 'insert:normal' \
+  hook -group trailing-whitespace window ModeChange '(push|pop):insert:normal' \
     %{ face window TrailingWhitespaceActive TrailingWhitespace }
 }
 def show-trailing-whitespace-disable %{
@@ -570,7 +566,7 @@ def -hidden basic-autoindent-trim %{
 }
 def basic-autoindent-enable %{
   hook -group basic-autoindent window InsertChar '\n' basic-autoindent-on-newline
-  hook -group basic-autoindent window ModeChange 'insert:normal' basic-autoindent-trim
+  hook -group basic-autoindent window ModeChange 'pop:insert:normal' basic-autoindent-trim
   hook -group basic-autoindent window WinSetOption 'filetype=.*' basic-autoindent-disable
 }
 def basic-autoindent-disable %{ rmhooks window basic-autoindent }
