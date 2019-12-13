@@ -302,10 +302,10 @@ def comment-line-better %{
   eval -draft -itersel -save-regs '/"a' %{
     exec '<a-x><a-s>gi"aZ'
     try %{
-      exec -itersel 'gh<a-K>\S<ret>' # Fail if any line is unindented.
-      exec '"az<a-K>^$<ret>"aZ' # Drop blank lines.
-    } catch %{
+      exec 'gh<a-k>\S<ret>' # Fail if all (non-empty) line are indented.
       exec '"az'
+    } catch %{
+      exec '"az<a-K>^$<ret>"aZ' # Drop blank lines.
     }
     align-cursors-left
     exec '"aZ<a-l>'
@@ -542,7 +542,7 @@ face global TrailingWhitespace ''
 def tab-completion-enable %{
   hook -group tab-completion window InsertCompletionShow .* %{
     try %{
-      exec -draft 'h<a-K>\s<ret>'
+      #exec -draft 'h<a-K>\s<ret>'
       map window insert <tab> <c-n>
       map window insert <s-tab> <c-p>
     }
