@@ -17,9 +17,10 @@ def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
 ## General settings.
 set global ui_options ncurses_assistant=off ncurses_wheel_down_button=0
-set global startup_info_version 20190701
+set global startup_info_version 20200117
 set global grepcmd 'rg -Hn'
-module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
+#module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
+module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
 
 set global indentwidth 2
 set global tabstop 8
@@ -31,6 +32,10 @@ set global modelinefmt  "%%opt{gdb_indicator} %opt{modelinefmt}"
 # lots of contrast, easy to distinguish faces, easy to read comments... It
 # doesn't seem so unreasonable.
 colorscheme desertex; face global comment rgb:7ccd7c
+  face global PrimaryCursor   black,white+fg
+  face global SecondaryCursor bright-black,white+fg
+  face global PrimaryCursorEol   black,rgb:7ccd7c+fg
+  face global SecondaryCursorEol bright-black,rgb:9ced9c+fg
 #colorscheme default
 face global Whitespace cyan
 
@@ -181,6 +186,7 @@ set global expand_commands %{
     expand-impl %{ exec '<a-i>i' }
     expand-impl %{ exec '<a-:><a-;>k<a-K>^$<ret><a-i>i' }
     expand-impl %{ exec '<a-:>j<a-K>^$<ret><a-i>i' }
+    expand-impl %{ exec '<a-i>p' }
 }
 
 ## Hooks.
