@@ -12,6 +12,7 @@ source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
 source "%val{config}/scripts/snippet.kak"
 source "%val{config}/scripts/char-input.kak"
+source "%val{config}/scripts/strace.kak"
 
 def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
@@ -20,7 +21,9 @@ set global ui_options ncurses_assistant=off ncurses_wheel_down_button=0
 set global startup_info_version 20200117
 set global grepcmd 'rg -Hn'
 #module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
-module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
+#module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
+module-hook x11 %{ set global termcmd 'alacritty -e sh -c' }
+set global autocomplete prompt
 
 set global indentwidth 2
 set global tabstop 8
@@ -124,10 +127,12 @@ map global insert <c-w> '<a-;>: exec -draft b<lt>a-d<gt><ret>'
 map global prompt <a-i> '(?i)'
 map global prompt <a-o> '(?S)'
 
+map global insert <c-`> <c-n><c-p> # Open autocomplete on <c-space>.
+
 # Available normal keys:
 # D + ^ <ret> <ins> <F4>-<F11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
-# <c-[acgkmqrtwx]> <c-space> (\0) <c-]> () <c-/> ()
+# <c-[acgkmqrtwx]> (\0) <c-]> () <c-/> ()
 
 # User map.
 map global user m       -docstring 'make'                   ': make<ret>'
@@ -230,6 +235,12 @@ module-hook c-family %{ set global c_include_guard_style '' }
 filetype-hook '|plain' %{
   basic-autoindent-enable
 }
+module-hook c-family %{
+  addhl shared/c/code/keywords-custom regex \
+    \b(Struct|Union|Enum|Case|Default|OrCase|OrDefault|cast|global|numof)\b \
+    0:keyword
+}
+
 
 ## Defs.
 def Main  %{     rename-client Main;  set global jumpclient  Main  }
@@ -420,6 +431,29 @@ def Tabby -params ..1 \
     [ -n "$1" ] && echo "set window tabstop $1"
   }
 }
+
+# From the wiki.
+def file-chooser-rofi \
+  -params ..1 \
+  -docstring 'Select files in project using Ag and Rofi' \
+  %{ eval %sh{
+  file=$(ag -g "" "$@" | rofi -dmenu -i -p 'file')
+  #file=$(find . -type f | rofi -dmenu -i -p 'file')
+  if [ -n "$file" ]; then
+    # TODO: Escaping!
+    printf 'eval -client %%{%s} '\''edit %%{%s}'\''\n' "${kak_client}" "${file}" | kak -p "${kak_session}"
+  fi
+}}
+def buffer-chooser-rofi \
+  -docstring 'Select an open buffer using Rofi' \
+  %{ eval %sh{
+  buffer=$(printf %s\\n "${kak_buflist}" | tr ' ' '\n' | sed "s/^'//; s/'$//" | rofi -dmenu -i -p 'buffer')
+  if [ -n "$buffer" ]; then
+    echo "eval -client '$kak_client' 'buffer ${buffer}'" | kak -p ${kak_session}
+  fi
+}}
+alias global file-chooser file-chooser-rofi
+alias global buffer-chooser buffer-chooser-rofi
 
 ## More:
 # Git extras.
