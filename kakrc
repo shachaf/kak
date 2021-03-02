@@ -18,12 +18,13 @@ def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
 ## General settings.
 set global ui_options ncurses_assistant=off ncurses_wheel_down_button=0
-set global startup_info_version 20200117
+set global startup_info_version 20200901
 set global grepcmd 'rg -Hn'
 #module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
 #module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
 module-hook x11 %{ set global termcmd 'alacritty -e sh -c' }
 set global autocomplete prompt
+set global makecmd './make'
 
 set global indentwidth 2
 set global tabstop 8
@@ -120,14 +121,14 @@ map global insert <c-k>   '<a-;>: char-input-begin "%val{config}/scripts/char-in
 map global insert <a-k>   '<a-;>: char-input-begin "%val{config}/scripts/char-input-tex.txt"<ret>'
 map global insert <a-K>   '<a-;>: char-input-begin "%val{config}/scripts/char-input-unicode.txt"<ret>'
 map global insert <c-a-k> '<a-;>: char-input-begin "%val{config}/local/char-input-extra.txt"<ret>'
-map global insert <>     '\<a-;>: char-input-begin "%val{config}/scripts/char-input-tex.txt" h<ret>' # <c-\>
+map global insert <c-\>     '\<a-;>: char-input-begin "%val{config}/scripts/char-input-tex.txt" h<ret>'
 
 map global insert <c-w> '<a-;>: exec -draft b<lt>a-d<gt><ret>'
 
 map global prompt <a-i> '(?i)'
 map global prompt <a-o> '(?S)'
 
-map global insert <c-`> <c-n><c-p> # Open autocomplete on <c-space>.
+map global insert <c-space> <c-n><c-p> # Open autocomplete.
 
 # Available normal keys:
 # D + ^ <ret> <ins> <F4>-<F11> 0 <backspace> (with :zero/:backspace)
@@ -437,8 +438,9 @@ def file-chooser-rofi \
   -params ..1 \
   -docstring 'Select files in project using Ag and Rofi' \
   %{ eval %sh{
-  file=$(ag -g "" "$@" | rofi -dmenu -i -p 'file')
+  #file=$(ag -g "" "$@" | rofi -dmenu -i -p 'file')
   #file=$(find . -type f | rofi -dmenu -i -p 'file')
+  file=$(fd -j1 -- "$@" | rofi -dmenu -i -p 'file')
   if [ -n "$file" ]; then
     # TODO: Escaping!
     printf 'eval -client %%{%s} '\''edit %%{%s}'\''\n' "${kak_client}" "${file}" | kak -p "${kak_session}"
@@ -458,7 +460,8 @@ alias global buffer-chooser buffer-chooser-rofi
 ## More:
 # Git extras.
 def git-show-blamed-commit %{
-  git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{print $1}'}
+  #git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{print $1}'}
+  git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{sub(/^\^/, ""); print $1;}'}
 }
 def git-log-lines %{
   git log -L %sh{
