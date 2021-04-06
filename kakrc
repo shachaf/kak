@@ -459,6 +459,40 @@ def buffer-chooser-rofi \
     echo "eval -client '$kak_client' 'buffer ${buffer}'" | kak -p ${kak_session}
   fi
 }}
+
+# TODO: Proper escaping?
+def file-chooser-fzf-tmux \
+  -params ..1 \
+  -docstring 'invoke fzf to open a file' \
+  %{ eval %sh{
+    if [ -n "$1" ]; then
+      echo "TODO: fix file-chooser-fzf-tmux" >&2
+    fi
+    if [ -z "$TMUX" ]; then
+      echo 'fail "only works inside tmux"'
+      exit
+    fi
+    file=$(find * -type f | fzf-tmux -d 15)
+    #file=$(ag -g "" "$@" | fzf-tmux -d 15)
+    if [ -n "$file" ]; then
+      printf 'eval -client %%{%s} edit %%{%s}\n' "${kak_client}" "${file}" | kak -p "${kak_session}"
+    fi
+}}
+
+def buffer-chooser-fzf-tmux \
+  -params ..1 \
+  -docstring 'invoke fzf to select a buffer' \
+  %{ eval %sh{
+    if [ -z "$TMUX" ]; then
+      echo 'fail "only works inside tmux"'
+      exit
+    fi
+    buffer=$(printf %s\\n "${kak_buflist}" | tr ' ' '\n' | sed "s/^'//; s/'$//" | fzf-tmux -d 15)
+    if [ -n "$buffer" ]; then
+      echo "eval -client '$kak_client' 'buffer ${buffer}'" | kak -p ${kak_session}
+    fi
+}}
+
 alias global file-chooser file-chooser-rofi
 alias global buffer-chooser buffer-chooser-rofi
 
