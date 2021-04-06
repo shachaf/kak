@@ -168,6 +168,9 @@ map global user / ': mark-word<ret>'  -docstring 'mark word'
 map global user ? ': mark-clear<ret>' -docstring 'clear marks'
 map global user _ ': other-client-buffer<ret>' -docstring 'other client buffer'
 
+map global user t -docstring 'fanciness off' ': FancinessOff<ret>'
+map global user T -docstring 'fanciness on' ': FancinessOn<ret>'
+
 ## Configure plugins.
 # snippet.kak
 set global snippet_program "%val{config}/scripts/snippet"
@@ -226,7 +229,9 @@ filetype-hook go %{
   # TODO: lint
 }
 filetype-hook c|cpp %{
-  clang-enable-autocomplete; clang-enable-diagnostics
+  def -override FancinessOn %{ clang-enable-autocomplete; clang-enable-diagnostics }
+  def -override FancinessOff %{ clang-disable-autocomplete; clang-disable-diagnostics }
+  FancinessOn
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
   map window object ';' 'c/\*,\*/<ret>' -docstring '/* comment */'
