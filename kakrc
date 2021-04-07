@@ -79,11 +79,11 @@ map global normal  <a-'> ': select-WORD-better<ret>*'
 
 map global normal <x> <a-x>
 
-map global normal      <=> ': phantom-sel-add-selection<ret>'
-map global normal    <a-=> ': phantom-sel-select-all; phantom-sel-clear<ret>'
-map global normal <a-plus> ': phantom-sel-clear<ret>'
-map global normal    <a-9> ': phantom-sel-iterate-prev<ret>'
-map global normal    <a-0> ': phantom-sel-iterate-next<ret>'
+map global normal      <=> ': phantom-selection-add-selection<ret>'
+map global normal    <a-=> ': phantom-selection-select-all; phantom-selection-clear<ret>'
+map global normal <a-plus> ': phantom-selection-clear<ret>'
+map global normal    <a-9> ': phantom-selection-iterate-prev<ret>'
+map global normal    <a-0> ': phantom-selection-iterate-next<ret>'
 
 # Can't emulate ^E/^Y perfectly. This is close, but maybe I should just use V.
 #map global normal <c-e> 'vj'; map global normal <c-y> 'vk'
