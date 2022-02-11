@@ -17,19 +17,20 @@ source "%val{config}/scripts/strace.kak"
 def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
 ## General settings.
-set global ui_options ncurses_assistant=off ncurses_wheel_down_button=0
+set global ui_options terminal_assistant=off terminal_wheel_down_button=0
 set global startup_info_version 20200901
 set global grepcmd 'rg -Hn'
 #module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
-#module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
-module-hook x11 %{ set global termcmd 'alacritty -e sh -c' }
+module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
+#module-hook x11 %{ set global termcmd 'alacritty -e sh -c' }
 set global autocomplete prompt
 set global makecmd './make'
 
 set global indentwidth 2
 set global tabstop 8
 
-set global modelinefmt '%val{bufname} %val{cursor_line}:%val{cursor_char_column} {{context_info}} {{mode_info}} - %val{client}@[%val{session}]' # Default modeline.
+#set global modelinefmt '%val{bufname} %val{cursor_line}:%val{cursor_char_column} {{context_info}} {{mode_info}} - %val{client}@[%val{session}]' # Default modeline.
+set global modelinefmt '%val{bufname} %val{cursor_line}:%val{cursor_char_column} [%val{cursor_byte_offset}] {{context_info}} {{mode_info}} - %val{client}@[%val{session}]'
 set global modelinefmt  "%%opt{gdb_indicator} %opt{modelinefmt}"
 
 # None of these colorschemes do what I want: Dark background, bright colors,
@@ -164,6 +165,10 @@ map global user <,>     -docstring 'choose buffer'          ': buffer-chooser<re
 map global user <.>     -docstring 'choose file'            ': file-chooser<ret>'
 map global user f       -docstring 'format'                 ': format<ret>'
 
+map global user ';'     -docstring 'format paragraph'       ': format-paragraph<ret>'
+def format-paragraph %{ exec -draft '<a-i>p,=' }
+
+
 map global user / ': mark-word<ret>'  -docstring 'mark word'
 map global user ? ': mark-clear<ret>' -docstring 'clear marks'
 map global user _ ': other-client-buffer<ret>' -docstring 'other client buffer'
@@ -226,6 +231,7 @@ filetype-hook makefile|go %{
 filetype-hook go %{
   alias window format go-format-use-goimports
   alias window jump-to-definition go-jump
+  Tabby 4
   # TODO: lint
 }
 filetype-hook c|cpp %{
@@ -234,6 +240,7 @@ filetype-hook c|cpp %{
   FancinessOn
   alias window lint clang-parse
   alias window lint-next-error clang-diagnostics-next
+  set window formatcmd clang-format
   map window object ';' 'c/\*,\*/<ret>' -docstring '/* comment */'
 }
 module-hook clang %{ set global clang_options '-Wno-pragma-once-outside-header' }
@@ -272,8 +279,8 @@ def backspace -params 1 %{ eval %sh{[ "$kak_count" = 0 ] && echo "$1" || echo "e
 # Sort of a replacement for gq.
 #def format-text %{ exec '|fmt<ret>' }
 def format-text %{
-  #exec '|par -w%opt{autowrap_column}<a-!><ret>'
-  exec '|par "rTbqR" "B=.,?_A_a Q=_s>|" -w%opt{autowrap_column}<a-!><ret>'
+  exec '|par -w%opt{autowrap_column}<a-!><ret>'
+  #exec '|par "rTbqR" "B=.,?_A_a Q=_s>|" -w%opt{autowrap_column}<a-!><ret>'
 }
 
 def select-word-better %{
