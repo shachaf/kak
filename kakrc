@@ -233,7 +233,7 @@ filetype-hook makefile|go %{
 }
 filetype-hook go %{
   alias window format go-format-use-goimports
-  alias window jump-to-definition go-jump
+  alias window jump-to-definition lsp-definition
   Tabby 4
   # TODO: lint
   lsp-enable-window
