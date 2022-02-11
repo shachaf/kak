@@ -7,6 +7,7 @@ source "%val{config}/plugins/kakoune-mark/mark.kak"
 source "%val{config}/plugins/kakoune-filetree/filetree.kak"
 source "%val{config}/plugins/kakoune-gdb/gdb.kak"
 source "%val{config}/plugins/kakoune-expand/expand.kak"
+source "%val{config}/plugins/kak-lsp/rc/lsp.kak"
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
@@ -131,8 +132,10 @@ map global prompt <a-o> '(?S)'
 
 map global insert <c-space> <c-n><c-p> # Open autocomplete.
 
+map global normal 0 ': zero "enter-user-mode lsp"<ret>'
+
 # Available normal keys:
-# D + ^ <ret> <ins> <F4>-<F11> 0 <backspace> (with :zero/:backspace)
+# ^ <ret> <ins> <F4>-<F11> 0 <backspace> (with :zero/:backspace)
 # <a-[1-8,\\]> <a-ret>
 # <c-[acgkmqrtwx]> (\0) <c-]> () <c-/> ()
 
@@ -233,6 +236,7 @@ filetype-hook go %{
   alias window jump-to-definition go-jump
   Tabby 4
   # TODO: lint
+  lsp-enable-window
 }
 filetype-hook c|cpp %{
   def -override FancinessOn %{ clang-enable-autocomplete; clang-enable-diagnostics }
@@ -410,7 +414,8 @@ def del-trailing-whitespace %{
   }
 }
 
-def go-format-use-goimports %{ go-format -use-goimports }
+#def go-format-use-goimports %{ go-format -use-goimports }
+def go-format-use-goimports %{ gopls imports }
 
 def man-selection-with-count %{
   man %sh{
