@@ -19,7 +19,7 @@ def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
 ## General settings.
 set global ui_options terminal_assistant=off terminal_wheel_down_button=0
-set global startup_info_version 20200901
+set global startup_info_version 20211107
 set global grepcmd 'rg -Hn'
 #module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
 module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
@@ -211,7 +211,7 @@ set global expand_commands %{
 hook global BufOpenFifo '\*make\*' %{ alias global next make-next-error; alias global prev make-previous-error }
 hook global BufOpenFifo '\*grep\*' %{ alias global next grep-next-match; alias global prev grep-previous-match }
 hook global BufCreate   '\*find\*' %{ alias global next find-next-match; alias global prev find-previous-match }
-hook global BufSetOption 'spell_tmp_file=.+' %{ alias global next spell-next; unalias global prev }
+hook global BufSetOption 'spell_last_lang=.*' %{ alias global next spell-next; unalias global prev }
 
 hook -group opendir global \
   RuntimeError ".*\d+:\d+: '\w+' (.*): is a directory" \
