@@ -42,7 +42,7 @@ def char-input-begin -params 1..2 \
       #set window char_input_ongoing_anchor "%val{cursor_line}.%val{cursor_column}"
     }
     eval -draft %{
-      exec "<esc><space>;%arg{2}"
+      exec "<esc>,;%arg{2}"
       set window char_input_ongoing_anchor "%val{cursor_line}.%val{cursor_column}"
     }
     char-input-complete
@@ -97,7 +97,7 @@ def -hidden char-input-end %{
 def -hidden char-input-complete %{
   try %{
     eval -draft %{
-      exec '<esc>;<space>'
+      exec '<esc>;,'
       set window char_input_ongoing_cursor "%val{cursor_line}.%val{cursor_column}"
 
       # End completion if cursor position (now) < anchor position (when

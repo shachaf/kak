@@ -18,7 +18,7 @@ def replace-next-hole %{
     try %{
       exec '"aZ'
       reg / %opt{snippet_hole_pattern}
-      exec '<space>h/<ret>'
+      exec ',h/<ret>'
       exec -save-regs '' %{<a-*>"aZ%s<ret>"bZ"az"b<a-z>a}
       exec -with-hooks '<a-c>'
     } catch %{
@@ -51,7 +51,7 @@ def snippet \
   eval -save-regs '|abc' %{
     try %{
       exec "!%opt{snippet_program} '%opt{snippet_file}' '%arg{1}'<ret>" 'uU' # insert and select snippet
-      exec '<a-;><a-s>)"aZ "bZgi"b<a-z>u<a-;>"a<a-z>a&' # fix indentation
+      exec '<a-;><a-s>)"aZ,"bZgi"b<a-z>u<a-;>"a<a-z>a&' # fix indentation
       exec 'h'
       replace-next-hole
     }

@@ -79,8 +79,6 @@ map global normal <%> '<c-s>%' # Save position before %
 map global normal    <'> ': select-word-better<ret>*'
 map global normal  <a-'> ': select-WORD-better<ret>*'
 
-map global normal <x> <a-x>
-
 map global normal      <=> ': phantom-selection-add-selection<ret>'
 map global normal    <a-=> ': phantom-selection-select-all; phantom-selection-clear<ret>'
 map global normal <a-plus> ': phantom-selection-clear<ret>'
@@ -290,13 +288,13 @@ def format-text %{
 def select-word-better %{
   # Note: \w doesn't use extra_word_chars.
   eval -itersel %{
-    try %{ exec '<a-i>w' } catch %{ exec '<a-l>s\w<ret>) <a-i>w' } catch %{}
+    try %{ exec '<a-i>w' } catch %{ exec '<a-l>s\w<ret>),<a-i>w' } catch %{}
   }
   exec '<a-k>\w<ret>'
 }
 def select-WORD-better %{
   eval -itersel %{
-    try %{ exec '<a-i><a-w>' } catch %{ exec '<a-l>s\S<ret>) <a-i><a-w>' } catch %{}
+    try %{ exec '<a-i><a-w>' } catch %{ exec '<a-l>s\S<ret>),<a-i><a-w>' } catch %{}
   }
   exec '<a-k>\S<ret>'
 }
@@ -334,7 +332,7 @@ def switch-to-modified-buffer %{
 def comment-line-better %{
   eval %sh{[ -z "$kak_opt_comment_line" ] && echo "fail '%opt{comment_line} not set!"}
   eval -draft -itersel -save-regs '/"a' %{
-    exec '<a-x><a-s>gi"aZ'
+    exec 'x<a-s>gi"aZ'
     try %{
       exec 'gh<a-k>\S<ret>' # Fail if all (non-empty) line are indented.
       exec '"az'
@@ -652,11 +650,12 @@ def tab-completion-disable %{ rmhooks window tab-completion }
 def -hidden basic-autoindent-on-newline %{
   eval -draft -itersel %{
     try %{ exec -draft ';K<a-&>' }                      # copy indentation from previous line
-    try %{ exec -draft ';k<a-x><a-k>^\h+$<ret>H<a-d>' } # remove whitespace from autoindent on previous line
+    #try %{ exec -draft ';k<a-x><a-k>^\h+$<ret>H<a-d>' } # remove whitespace from autoindent on previous line
+    try %{ exec -draft ';kx<a-k>^\h+$<ret>H<a-d>' } # remove whitespace from autoindent on previous line
   }
 }
 def -hidden basic-autoindent-trim %{
-  try %{ exec -draft '<a-x>' '1s^(\h+)$<ret>' '<a-d>' }
+  try %{ exec -draft 'x' '1s^(\h+)$<ret>' '<a-d>' }
 }
 def basic-autoindent-enable %{
   hook -group basic-autoindent window InsertChar '\n' basic-autoindent-on-newline

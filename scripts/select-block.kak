@@ -1,6 +1,6 @@
 def select-block %{
   eval -itersel -save-regs 'ab' %{
-    exec '"aZ<a-x>"by"az'
+    exec '"aZx"by"az'
     eval %sh{
       python3 <<'EOF'
 #!/usr/bin/env python3
