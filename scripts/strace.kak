@@ -12,4 +12,4 @@ addhl shared/strace/main/ regex '\b[A-Z]{2,}\b' 0:keyword
 addhl shared/strace/main/ regex '[^\n]\b(0x[0-9a-fA-F]+|-?\d+)\b' 1:value
 addhl shared/strace/main/ regex '\s(=)\s(0x[0-9a-fA-F]+|-?\d+|\?)' 1:operator 2:operator
 hook -group strace-highlight global WinSetOption filetype=strace %{ addhl window/strace ref strace }
-hook -group strace-highlight global WinSetOption filetype=(?!strace).* %{ rmhl window/strace }
+hook -group strace-highlight global WinSetOption filetype=(?!strace).* %{ try %{ rmhl window/strace } }

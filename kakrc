@@ -19,7 +19,7 @@ def module-hook -params 2 %{ hook global ModuleLoaded %arg{1} %arg{2} }
 
 ## General settings.
 set global ui_options terminal_assistant=off terminal_wheel_down_button=0
-set global startup_info_version 20211107
+set global startup_info_version 20240518
 set global grepcmd 'rg -Hn'
 #module-hook x11 %{ set global termcmd 'gnome-terminal -- bash -c' }
 module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
@@ -167,7 +167,7 @@ map global user <.>     -docstring 'choose file'            ': file-chooser<ret>
 map global user f       -docstring 'format'                 ': format<ret>'
 
 map global user ';'     -docstring 'format paragraph'       ': format-paragraph<ret>'
-def format-paragraph %{ exec -draft '<a-i>p,=' }
+def format-paragraph %{ exec -draft '<a-i>p<space>=' }
 
 
 map global user / ': mark-word<ret>'  -docstring 'mark word'
@@ -209,7 +209,7 @@ set global expand_commands %{
 hook global BufOpenFifo '\*make\*' %{ alias global next make-next-error; alias global prev make-previous-error }
 hook global BufOpenFifo '\*grep\*' %{ alias global next grep-next-match; alias global prev grep-previous-match }
 hook global BufCreate   '\*find\*' %{ alias global next find-next-match; alias global prev find-previous-match }
-hook global BufSetOption 'spell_last_lang=.*' %{ alias global next spell-next; unalias global prev }
+#hook global BufSetOption 'spell_last_lang=.*' %{ alias global next spell-next; unalias global prev } # Bug: Gets triggered in every new buf, or something?
 
 hook -group opendir global \
   RuntimeError ".*\d+:\d+: '\w+' (.*): is a directory" \
@@ -223,7 +223,7 @@ hook -group opendir global \
 def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %arg{2} }
 
 filetype-hook man %{
-  rmhl window/number-lines
+  try %{ rmhl window/number-lines }
 }
 filetype-hook makefile|go %{
   try smarttab-disable
@@ -270,7 +270,7 @@ def Alternate %{
 }
 def Two %{ Main; Alternate }
 
-alias global g grep
+module-hook grep %{ alias global g grep }
 
 # Bind things that do't take numeric arguments to the keys 0/<backspace>.
 # Usage: map global normal 0 ': zero "exec gh"<ret>'
@@ -440,7 +440,7 @@ def Tabby -params ..1 \
   -docstring 'Tabby mode. Optional argument: Tabstop.' \
   %{
   try smarttab-disable
-  rmhl window/show-whitespaces
+  try %{ rmhl window/show-whitespaces }
   addhl window/show-whitespaces show-whitespaces -tab ' ' -tabpad ' ' -lf ' ' -spc ' ' -nbsp '⍽'
   set window indentwidth 0
   eval %sh{
@@ -507,11 +507,6 @@ alias global file-chooser file-chooser-rofi
 alias global buffer-chooser buffer-chooser-rofi
 
 ## More:
-# Git extras.
-def git-show-blamed-commit %{
-  #git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{print $1}'}
-  git show %sh{git blame -L "$kak_cursor_line,$kak_cursor_line" "$kak_buffile" | awk '{sub(/^\^/, ""); print $1;}'}
-}
 def git-log-lines %{
   git log -L %sh{
     anchor="${kak_selection_desc%,*}"
@@ -531,15 +526,15 @@ def git-toggle-blame %{
 def git-hide-diff %{ rmhl window/git-diff }
 
 declare-user-mode git
-map global git b ': git-toggle-blame<ret>'       -docstring 'blame (toggle)'
-map global git l ': git log<ret>'                -docstring 'log'
-map global git c ': git commit<ret>'             -docstring 'commit'
-map global git d ': git diff<ret>'               -docstring 'diff'
-map global git s ': git status<ret>'             -docstring 'status'
-map global git h ': git show-diff<ret>'          -docstring 'show diff'
-map global git H ': git-hide-diff<ret>'          -docstring 'hide diff'
-map global git w ': git-show-blamed-commit<ret>' -docstring 'show blamed commit'
-map global git L ': git-log-lines<ret>'          -docstring 'log blame'
+map global git b ': git-toggle-blame<ret>' -docstring 'blame (toggle)'
+map global git l ': git log<ret>'          -docstring 'log'
+map global git c ': git commit<ret>'       -docstring 'commit'
+map global git d ': git diff<ret>'         -docstring 'diff'
+map global git s ': git status<ret>'       -docstring 'status'
+map global git h ': git show-diff<ret>'    -docstring 'show diff'
+map global git H ': git-hide-diff<ret>'    -docstring 'hide diff'
+map global git w ': git blame-jump<ret>'   -docstring 'blame-jump'
+map global git L ': git-log-lines<ret>'    -docstring 'log blame'
 
 # gdb extras.
 declare-option str executable
@@ -624,7 +619,7 @@ def show-trailing-whitespace-enable %{
     %{ face window TrailingWhitespaceActive TrailingWhitespace }
 }
 def show-trailing-whitespace-disable %{
-  rmhl window/TrailingWhitespace
+  try %{ rmhl window/TrailingWhitespace }
   rmhooks window trailing-whitespace
 }
 face global TrailingWhitespace ''
@@ -675,7 +670,7 @@ map global set w ':set window ' -docstring 'window'
 # * Match more keys in the deactivate hook
 # * Remove the deactivate hook when not active, to clean up debug hook log
 def -hidden volatile-highlighting-deactivate %{
-  rmhl window/VolatileHighlighting
+  try %{ rmhl window/VolatileHighlighting }
   rmhooks window volatile-highlighting-active
 }
 
@@ -699,10 +694,10 @@ def search-highlighting-enable %{
   hook window -group search-highlighting NormalKey [/?*nN]|<a-[/?*nN]> %{ try %{
     addhl window/SearchHighlighting dynregex '%reg{/}' 0:Search
   }}
-  hook window -group search-highlighting NormalKey <esc> %{ rmhl window/SearchHighlighting }
+  hook window -group search-highlighting NormalKey <esc> %{ try %{ rmhl window/SearchHighlighting } }
 }
 def search-highlighting-disable %{
-  rmhl window/SearchHighlighting
+  try %{ rmhl window/SearchHighlighting }
   rmhooks window search-highlighting
 }
 
