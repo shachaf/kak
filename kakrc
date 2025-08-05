@@ -7,7 +7,8 @@ source "%val{config}/plugins/kakoune-mark/mark.kak"
 source "%val{config}/plugins/kakoune-filetree/filetree.kak"
 source "%val{config}/plugins/kakoune-gdb/gdb.kak"
 source "%val{config}/plugins/kakoune-expand/expand.kak"
-source "%val{config}/plugins/kak-lsp/rc/lsp.kak"
+#source "%val{config}/plugins/kak-lsp/rc/lsp.kak"
+eval %sh{kak-lsp}
 
 source "%val{config}/scripts/select-block.kak"
 source "%val{config}/scripts/colorscheme-browser.kak"
@@ -48,7 +49,7 @@ face global Whitespace cyan
 hook global WinCreate .* %{
   addhl window/wrap wrap
   addhl window/number-lines number-lines -relative -hlcursor
-  addhl window/show-whitespaces show-whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽'
+  addhl window/show-whitespaces show-whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽' -indent ''
   addhl window/show-matching show-matching
   addhl window/VisibleWords regex \b(?:FIXME|TODO|XXX)\b 0:default+rb
 
@@ -165,6 +166,7 @@ map global user s       -docstring 'set option'             ': enter-user-mode s
 map global user <,>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
 map global user <.>     -docstring 'choose file'            ': file-chooser<ret>'
 map global user f       -docstring 'format'                 ': format<ret>'
+map global user d       -docstring 'ctags-search'           ': ctags-search '
 
 map global user ';'     -docstring 'format paragraph'       ': format-paragraph<ret>'
 def format-paragraph %{ exec -draft '<a-i>p<space>=' }
@@ -212,7 +214,7 @@ hook global BufCreate   '\*find\*' %{ alias global next find-next-match; alias g
 #hook global BufSetOption 'spell_last_lang=.*' %{ alias global next spell-next; unalias global prev } # Bug: Gets triggered in every new buf, or something?
 
 hook -group opendir global \
-  RuntimeError ".*\d+:\d+: '\w+' (.*): is a directory" \
+  RuntimeError ".*\d+:\d+: '\w+': (.*): [Ii]s a directory" \
   %{
     echo
     file-chooser %val{hook_param_capture_1}
@@ -239,10 +241,24 @@ filetype-hook go %{
 filetype-hook c|cpp %{
   def -override FancinessOn %{ clang-enable-autocomplete; clang-enable-diagnostics }
   def -override FancinessOff %{ clang-disable-autocomplete; clang-disable-diagnostics }
-  FancinessOn
-  alias window lint clang-parse
-  alias window lint-next-error clang-diagnostics-next
-  set window formatcmd clang-format
+  #FancinessOn
+  #alias window lint clang-parse
+  #alias window lint-next-error clang-diagnostics-next
+  #set window formatcmd clang-format
+  lsp-enable-window
+
+  #hook -group XXX window ModeChange '(push|pop):normal:insert' %{
+  #  lsp-diagnostic-lines-disable window
+  #  lsp-inline-diagnostics-disable window
+  #}
+  #hook -group XXX window ModeChange '(push|pop):insert:normal' %{
+  #  lsp-diagnostic-lines-enable window
+  #  lsp-inline-diagnostics-enable window
+  #}
+
+  lsp-diagnostic-lines-disable window
+  lsp-inline-diagnostics-disable window
+
   map window object ';' 'c/\*,\*/<ret>' -docstring '/* comment */'
 }
 module-hook clang %{ set global clang_options '-Wno-pragma-once-outside-header' }
@@ -254,6 +270,10 @@ module-hook c-family %{
   addhl shared/c/code/keywords-custom regex \
     \b(Struct|Union|Enum|Case|Default|OrCase|OrDefault|cast|global|numof)\b \
     0:keyword
+}
+
+filetype-hook rust %{
+  set window indentwidth 4
 }
 
 
@@ -455,7 +475,7 @@ def file-chooser-rofi \
   %{ eval %sh{
   #file=$(ag -g "" "$@" | rofi -dmenu -i -p 'file')
   #file=$(find . -type f | rofi -dmenu -i -p 'file')
-  file=$(fd -j1 -- "$@" | rofi -dmenu -i -p 'file')
+  file=$(fd -j1 . -- "$@" | rofi -dmenu -i -p 'file')
   if [ -n "$file" ]; then
     # TODO: Escaping!
     printf 'eval -client %%{%s} '\''edit %%{%s}'\''\n' "${kak_client}" "${file}" | kak -p "${kak_session}"
