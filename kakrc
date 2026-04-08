@@ -50,10 +50,10 @@ face global Whitespace cyan
 
 hook global WinCreate .* %{
   addhl window/wrap wrap
-  addhl window/number-lines number-lines -relative -hlcursor
   addhl window/show-whitespaces show-whitespaces -tab '‣' -tabpad '―' -lf ' ' -spc ' ' -nbsp '⍽' -indent ''
   addhl window/show-matching show-matching
   addhl window/VisibleWords regex \b(?:FIXME|TODO|XXX)\b 0:default+rb
+  number-lines-enable
 
   smarttab-enable
   tab-completion-enable
@@ -168,6 +168,7 @@ map global user s       -docstring 'set option'             ': enter-user-mode s
 map global user <,>     -docstring 'choose buffer'          ': buffer-chooser<ret>'
 map global user <.>     -docstring 'choose file'            ': file-chooser<ret>'
 map global user f       -docstring 'format'                 ': format<ret>'
+map global user <#>     -docstring 'toggle number-lines'    ': number-lines-toggle<ret>'
 map global user d       -docstring 'ctags-search'           ': ctags-search '
 
 map global user ';'     -docstring 'format paragraph'       ': format-paragraph<ret>'
@@ -227,7 +228,7 @@ hook -group opendir global \
 def filetype-hook -params 2 %{ hook global WinSetOption "filetype=(%arg{1})" %arg{2} }
 
 filetype-hook man %{
-  try %{ rmhl window/number-lines }
+  try number-lines-disable
 }
 filetype-hook makefile|go %{
   try smarttab-disable
@@ -725,6 +726,10 @@ def search-highlighting-disable %{
   rmhooks window search-highlighting
 }
 
+# number-lines
+def number-lines-enable %{ addhl window/number-lines number-lines -relative -hlcursor }
+def number-lines-disable %{ rmhl window/number-lines }
+def number-lines-toggle %{ try number-lines-disable catch number-lines-enable }
 
 # More things.
 eval %sh{[ -r "$kak_config/local/kakrc" ] && echo 'source "%val{config}/local/kakrc"' || echo 'echo -debug "no local kakrc"' }
