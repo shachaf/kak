@@ -28,6 +28,8 @@ module-hook x11 %{ set global termcmd 'gnome-terminal -- winch-runner' }
 set global autocomplete prompt
 set global makecmd './make'
 
+set global windowing_placement horizontal
+
 set global indentwidth 2
 set global tabstop 8
 
@@ -237,6 +239,7 @@ filetype-hook go %{
   Tabby 4
   # TODO: lint
   lsp-enable-window
+  rmhooks window go-closing-delimiter-insert
 }
 filetype-hook c|cpp %{
   def -override FancinessOn %{ clang-enable-autocomplete; clang-enable-diagnostics }
@@ -268,7 +271,7 @@ filetype-hook '|plain' %{
 }
 module-hook c-family %{
   addhl shared/c/code/keywords-custom regex \
-    \b(Struct|Union|Enum|Case|Default|OrCase|OrDefault|cast|global|numof)\b \
+    \b(Struct|Union|Enum|Case|Default|OrCase|OrDefault|Loop|While|cast|global|numof)\b \
     0:keyword
 }
 
@@ -502,8 +505,9 @@ def file-chooser-fzf-tmux \
       echo 'fail "only works inside tmux"'
       exit
     fi
-    file=$(find * -type f | fzf-tmux -d 15)
+    #file=$(find * -type f | fzf-tmux -d 15)
     #file=$(ag -g "" "$@" | fzf-tmux -d 15)
+    file=$(fd -j1 . -- "$@" | fzf-tmux -d 15)
     if [ -n "$file" ]; then
       printf 'eval -client %%{%s} edit %%{%s}\n' "${kak_client}" "${file}" | kak -p "${kak_session}"
     fi
